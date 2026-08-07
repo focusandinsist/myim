@@ -1,4 +1,4 @@
-package http
+package httpx
 
 import (
 	"net/http"
@@ -28,7 +28,7 @@ func Response(c *gin.Context, obj any, err error) {
 			if field := fields.ByName("error_msg"); field != nil && field.Kind() == protoreflect.StringKind {
 				message := err.Error()
 				if statusCode >= http.StatusInternalServerError {
-					message = "internal server error"
+					message = ErrInternalServer.Error()
 				}
 				reflection.Set(field, protoreflect.ValueOfString(message))
 			}

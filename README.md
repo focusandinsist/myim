@@ -27,19 +27,22 @@ arch:
 ### 当前架构
 
 ```text
-app/cmd       启动入口和资源生命周期
-app/http      Gin 初始化、路由和协议处理
+app/app.go    依赖组装、HTTP启动和资源生命周期
+app/cmd       精简的进程入口
+app/router    Gin初始化、路由和协议处理
 app/service   业务流程，不增加无意义转发层
 app/dao       PostgreSQL 初始化和参数化 SQL
 app/model     持久化模型
 api/protobuf  请求响应协议及生成代码
-internal/http protobuf / JSON 统一响应
+internal/httpx protobuf / JSON统一响应
 test          统一测试目录
 docs          进度和 face 知识记录
 skills        本项目强制协作规则
 ```
 
-一个可部署模块对应一个 `service.Service`。Service 接收配置和 DAO 接口，数据库由 `main` 创建并关闭。不同业务可以拆到 `service/user.go`、`service/message.go` 等文件，但当前不增加嵌套 Service 或 DTO 层。
+根 `app.App` 持有 Config、DAO 和 HTTP Server，负责创建 Service、Router，并统一管理启动与关闭。一个可部署模块对应一个 `service.Service`，不同业务可以拆到 `service/user.go`、`service/message.go` 等文件，但当前不增加嵌套 Service 或 DTO 层。
+
+当前整个单体业务都位于 `app` 目录，因此 composition root 保持在 `app/app.go`。未来拆分微服务时，再按 `apps/<service>/internal/...` 整体迁移服务边界，不单独移动一个 App 文件。
 
 ### 当前接口
 
