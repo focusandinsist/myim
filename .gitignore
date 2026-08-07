@@ -26,6 +26,6 @@ bazel-*
 *.grpc@@DEFAULT
 *.zip
 
-/docs
 /test
-/.gocache
+# /docs
+# /.gocache
