@@ -203,8 +203,8 @@ func (s *Service) HandleCGUserLogin(ctx context.Context, input *proto_user.ReqUs
 	return output, nil
 }
 
-func (s *Service) HandleCGMyProfile(ctx context.Context, accessToken string) (output *proto_user.ResUserProfile, err error) {
-	output = new(proto_user.ResUserProfile)
+func (s *Service) HandleCGMyProfile(ctx context.Context, accessToken string) (output *proto_user.ResMyProfile, err error) {
+	output = new(proto_user.ResMyProfile)
 	claims, err := ValidateAccessToken(accessToken, s.config.JWTSecret)
 	if err != nil {
 		output.ErrorCode = http.StatusUnauthorized
@@ -243,8 +243,8 @@ func (s *Service) HandleCGMyProfile(ctx context.Context, accessToken string) (ou
 	return output, nil
 }
 
-func (s *Service) HandleCGTargetProfile(ctx context.Context, input *proto_user.ReqOtherUserProfile, accessToken string) (output *proto_user.ResOtherUserProfile, err error) {
-	output = new(proto_user.ResOtherUserProfile)
+func (s *Service) HandleCGTargetProfile(ctx context.Context, input *proto_user.ReqTargetProfile, accessToken string) (output *proto_user.ResTargetProfile, err error) {
+	output = new(proto_user.ResTargetProfile)
 	if _, err = ValidateAccessToken(accessToken, s.config.JWTSecret); err != nil {
 		output.ErrorCode = http.StatusUnauthorized
 		output.ErrorMsg = ErrInvalidAccessToken.Error()

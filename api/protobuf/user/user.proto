@@ -28,10 +28,10 @@ message ResUserLogin {
     int64 expires_at = 5; // 令牌过期时间，Unix秒
 }
 
-message ReqUserProfile {
+message ReqMyProfile {
 }
 
-message ResUserProfile {
+message ResMyProfile {
     int32 error_code = 1; // 错误码，0表示成功
     string error_msg = 2; // 错误信息
     string user_id = 3; // 用户ID
@@ -50,11 +50,11 @@ message ResUserProfile {
     int64 updated_time = 16; // 最后更新时间，Unix秒
 }
 
-message ReqOtherUserProfile {
+message ReqTargetProfile {
     string user_id = 1; // 目标用户ID
 }
 
-message ResOtherUserProfile {
+message ResTargetProfile {
     int32 error_code = 1; // 错误码，0表示成功
     string error_msg = 2; // 错误信息
     string user_id = 3; // 用户ID

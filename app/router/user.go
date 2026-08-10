@@ -47,8 +47,8 @@ func HandleCGMyProfile(c *gin.Context) {
 }
 
 func HandleCGTargetProfile(c *gin.Context) {
-	input := new(proto_user.ReqOtherUserProfile)
-	output := new(proto_user.ResOtherUserProfile)
+	input := new(proto_user.ReqTargetProfile)
+	output := new(proto_user.ResTargetProfile)
 	if err := c.ShouldBind(input); err != nil {
 		output.ErrorCode = http.StatusBadRequest
 		output.ErrorMsg = httpx.ErrInvalidRequest.Error()
