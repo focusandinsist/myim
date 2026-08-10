@@ -16,13 +16,6 @@ var (
 	ErrUserNameExists = errors.New("user name already exists") // 用户名违反数据库唯一约束
 )
 
-type UserRepository interface {
-	CreateUser(ctx context.Context, user *model.User) error                        // 创建用户
-	GetUserByUserName(ctx context.Context, userName string) (*model.User, error)   // 根据用户名查询用户
-	UserNameExists(ctx context.Context, userName string) (bool, error)             // 判断用户名是否已经存在
-	UpdateLastLoginTime(ctx context.Context, userID string, loginTime int64) error // 更新用户最后登录时间
-}
-
 func (d *Dao) CreateUser(ctx context.Context, user *model.User) error {
 	const query = `
 		INSERT INTO users

@@ -50,9 +50,17 @@ skills        本项目强制协作规则
 
 - `POST /user-register`：注册用户，校验用户名和密码，使用 bcrypt 保存密码。
 - `POST /user-login`：验证密码，签发 HS256 JWT，更新最后登录时间。
+- `GET /user-profile`：通过 `Authorization: Bearer <token>` 获取当前登录用户的完整个人资料，不返回密码。
+- `GET /users/:user_id/profile`：登录后查询指定用户的公开资料，不返回登录账号、联系方式、账号状态和登录时间。
 - `GET /health`：服务健康检查，成功返回 HTTP 204。
 
+当前用户自己的资料接口与未来查看他人公开资料的接口分开设计。自己的资料可以包含手机号、邮箱、账号状态和登录时间；公开资料只能返回昵称、头像、简介等公开字段，后续应使用独立协议和路由实现，避免敏感字段泄露。
+
+登录成功后，客户端在访问需要身份的接口时携带 `Authorization: Bearer <access_token>`。当前访问令牌有效期为 24 小时；重复登录会签发新 token，但不会主动注销此前仍在有效期内的 token。
+
 HTTP 请求支持 JSON 和 protobuf binding；响应根据 `Accept` 或请求 `Content-Type` 返回 protobuf 或 protobuf JSON。所有 protobuf 响应前两个字段固定为 `error_code`、`error_msg`。
+
+`service.Service` 当前直接持有一个具体 `*dao.Dao`。所有 SQL 和 `sql.DB` 仍封装在 DAO 内，Service 不直接操作数据库连接池；新增 friend、message 业务时继续在 DAO 和 Service 中按文件组织，等出现独立部署和数据所有权后再拆服务。
 
 ### 数据库现状
 

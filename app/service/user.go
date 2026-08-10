@@ -23,9 +23,11 @@ import (
 )
 
 var (
-	ErrInvalidInput       = errors.New("invalid input")                 // 请求字段缺失或格式不符合业务要求
-	ErrUserNameExists     = errors.New("user name already exists")      // 注册用户名已被占用
-	ErrInvalidCredentials = errors.New("invalid user name or password") // 登录用户名不存在或密码错误
+	ErrInvalidInput       = errors.New("invalid input")                   // 请求字段缺失或格式不符合业务要求
+	ErrUserNameExists     = errors.New("user name already exists")        // 注册用户名已被占用
+	ErrInvalidCredentials = errors.New("invalid user name or password")   // 登录用户名不存在或密码错误
+	ErrInvalidAccessToken = errors.New("invalid or expired access token") // 访问令牌无效、过期或所属用户不存在
+	ErrUserNotFound       = errors.New("user not found")                  // 目标用户不存在
 )
 
 const defaultTokenExpiry = 24 * time.Hour
@@ -198,6 +200,84 @@ func (s *Service) HandleCGUserLogin(ctx context.Context, input *proto_user.ReqUs
 	output.UserId = user.UserID
 	output.AccessToken = token
 	output.ExpiresAt = expiresAt
+	return output, nil
+}
+
+func (s *Service) HandleCGUserProfile(ctx context.Context, accessToken string) (output *proto_user.ResUserProfile, err error) {
+	output = new(proto_user.ResUserProfile)
+	claims, err := ValidateAccessToken(accessToken, s.config.JWTSecret)
+	if err != nil {
+		output.ErrorCode = http.StatusUnauthorized
+		output.ErrorMsg = ErrInvalidAccessToken.Error()
+		return output, ErrInvalidAccessToken
+	}
+
+	user, err := s.dao.GetUserByUserID(ctx, claims.UserID)
+	if err != nil {
+		if errors.Is(err, dao.ErrUserNotFound) {
+			output.ErrorCode = http.StatusUnauthorized
+			output.ErrorMsg = ErrInvalidAccessToken.Error()
+			return output, ErrInvalidAccessToken
+		}
+		err = fmt.Errorf("get current user: %w", err)
+		output.ErrorCode = http.StatusInternalServerError
+		output.ErrorMsg = err.Error()
+		return output, err
+	}
+
+	output.ErrorMsg = "ok"
+	output.UserId = user.UserID
+	output.UserName = user.UserName
+	output.Phone = user.Phone
+	output.Email = user.Email
+	output.Nickname = user.Nickname
+	output.Avatar = user.Avatar
+	output.Bio = user.Bio
+	output.Gender = user.Gender
+	output.Birthday = user.Birthday
+	output.Region = user.Region
+	output.Status = user.Status
+	output.RegisterTime = user.RegisterTime
+	output.LastLoginTime = user.LastLoginTime
+	output.UpdatedTime = user.UpdatedTime
+	return output, nil
+}
+
+func (s *Service) HandleCGOtherUserProfile(ctx context.Context, input *proto_user.ReqOtherUserProfile, accessToken string) (output *proto_user.ResOtherUserProfile, err error) {
+	output = new(proto_user.ResOtherUserProfile)
+	if _, err = ValidateAccessToken(accessToken, s.config.JWTSecret); err != nil {
+		output.ErrorCode = http.StatusUnauthorized
+		output.ErrorMsg = ErrInvalidAccessToken.Error()
+		return output, ErrInvalidAccessToken
+	}
+	if input == nil || uuid.Validate(input.GetUserId()) != nil {
+		err = fmt.Errorf("%w: valid user_id is required", ErrInvalidInput)
+		output.ErrorCode = http.StatusBadRequest
+		output.ErrorMsg = err.Error()
+		return output, err
+	}
+
+	user, err := s.dao.GetUserByUserID(ctx, input.GetUserId())
+	if err != nil {
+		if errors.Is(err, dao.ErrUserNotFound) {
+			output.ErrorCode = http.StatusNotFound
+			output.ErrorMsg = ErrUserNotFound.Error()
+			return output, ErrUserNotFound
+		}
+		err = fmt.Errorf("get other user: %w", err)
+		output.ErrorCode = http.StatusInternalServerError
+		output.ErrorMsg = err.Error()
+		return output, err
+	}
+
+	output.ErrorMsg = "ok"
+	output.UserId = user.UserID
+	output.Nickname = user.Nickname
+	output.Avatar = user.Avatar
+	output.Bio = user.Bio
+	output.Gender = user.Gender
+	output.Birthday = user.Birthday
+	output.Region = user.Region
 	return output, nil
 }
 

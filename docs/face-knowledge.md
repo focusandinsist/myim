@@ -187,6 +187,59 @@ SHA-256 速度太快，攻击者可以高并发暴力计算。bcrypt 是专门�
 - 验证时必须检查签名、过期时间和必要 claims。
 - JWT 签发后难以主动失效。需要强制下线、多设备管理或撤销能力时，应增加 session、token version 或 Redis 黑名单。
 
+### 当前 token 中有什么
+
+当前登录成功后返回 `access_token` 和 `expires_at`。token 的 Payload 保存：
+
+- `user_id`：确定当前请求属于哪个用户。
+- `user_name`：记录签发时的登录用户名。
+- `iat`：签发时间，Unix 秒。
+- `exp`：过期时间，Unix 秒。
+
+这些字段客户端可以解码看到，因此 token 不能存密码、手机号等秘密。服务端使用 `JWTSecret` 对 Header 和 Payload 进行 HS256 签名。客户端不知道密钥，无法在修改 `user_id` 后生成合法签名。
+
+### token 如何使用
+
+客户端登录后保存 `access_token`，访问需要登录身份的接口时放入 HTTP Header：
+
+```http
+GET /user-profile HTTP/1.1
+Authorization: Bearer <access_token>
+```
+
+`Bearer` 表示持有者凭证：谁拿到 token，服务端就会把谁当成对应用户。因此正式环境必须使用 HTTPS，不要把 token 写入 URL、普通日志或可被其他脚本随意读取的位置。
+
+当前 `/user-profile` 的处理过程是：
+
+1. Router 从 `Authorization` 中取出 Bearer Token。
+2. Service 重新计算 HS256 签名并与 token 签名比较。
+3. 解码 Payload，检查 `user_id` 非空和 `exp` 尚未过期。
+4. 使用 token 中的 `user_id` 查询当前用户，而不是相信客户端另外提交的用户 ID。
+5. 校验失败返回 HTTP 401；成功才返回自己的资料。
+
+### 为什么连续登录得到不同 token
+
+这是正常现象。当前 token 包含秒级的 `iat` 和由它计算出的 `exp`，两次登录只要发生在不同秒，Payload 就不同，最终签名和完整 token 也会不同。当前实现没有随机 `jti`，所以同一用户在同一秒内用相同条件签发时，理论上可能得到完全相同的 token。
+
+重复登录签发新 token，不代表旧 token 自动失效。当前 JWT 是无状态验证，服务端没有保存 token/session，也没有检查“这是用户最后一次登录签发的 token”。因此两次登录产生的两个 token 都可以使用，直到各自 `exp` 到期；当前配置的有效期是 24 小时。
+
+### 当前能力边界
+
+- 已实现：签发、签名校验、过期校验和从 token 获取用户身份。
+- 未实现：刷新 token、主动退出、单设备登录、强制下线、密码修改后使旧 token 失效。
+- 如果以后要求“新登录后旧 token 立即失效”，可以在用户或 session 中保存 `token_version`，将版本写入 token 并在每次请求时比较。
+- 如果要求管理每台设备，使用服务端 session 更清晰：为每次登录生成 session ID，数据库或 Redis 保存设备、过期时间和撤销状态。
+
+### Facer 可能追问
+
+**JWT 为什么还要签名，Base64 不是已经编码了吗？**
+
+Base64 只能编码，任何人都能解码和重新编码。签名用于证明内容由持有密钥的服务端签发，并检测 Payload 是否被修改。
+
+**服务端为什么不直接相信 token 里的过期时间？**
+
+服务端先验证签名，确认 `exp` 没有被客户端修改，然后才拿它和当前时间比较。只解码不验签等于允许客户端自己填写身份和有效期。
+
 ## PostgreSQL 与 DAO
 
 ### PostgreSQL 对象层级
@@ -322,8 +375,16 @@ DTO 不是层数越多越好。当前 protobuf 请求和响应已经承担传输
 
 ### 为什么 Service 不直接使用 `sql.DB`
 
-`sql.DB` 是数据库连接池和 SQL 执行工具，不是用户业务能力。Service 如果直接使用它，就必须同时负责 SQL、表名、字段扫描和数据库错误转换，业务层会与 PostgreSQL 细节混在一起。当前由 DAO 持有 `sql.DB` 并实现 SQL，Service 只调用 `UserRepository` 描述的用户持久化能力。
+`sql.DB` 是数据库连接池和 SQL 执行工具，不是用户业务能力。Service 如果直接使用它，就必须同时负责 SQL、表名、字段扫描和数据库错误转换，业务层会与 PostgreSQL 细节混在一起。当前由具体的 `*dao.Dao` 持有 `sql.DB` 并实现 SQL，Service 只调用 DAO 暴露的数据操作方法。
 
-`UserRepository` 并不是所有小项目都必须存在。它目前最直接的价值是 service 测试可以注入内存 fake，不需要真实 PostgreSQL；以后也可以替换 DAO 实现，而不修改注册登录流程。如果项目只追求最少代码，也可以让 Service 依赖具体的 `*dao.Dao`，仍然由 DAO 执行 SQL，只是 service 测试会更依赖数据库或需要更重的测试方案。无论是否保留接口，都不建议让 Service 直接操作 `sql.DB`。
+Repository 接口并不是所有小项目都必须存在。它的主要价值是 service 测试可以注入内存 fake，并允许替换持久化实现；代价是增加接口、构造参数和依赖理解成本。当前单体只有一个 PostgreSQL DAO，因此删除 `UserRepository`，让 Service 直接依赖 `*dao.Dao`。这仍然保持 `service -> dao -> sql.DB` 的分层，只是放弃当前阶段没有实际替换需求的抽象。
 
-增加 friend、message 后，不应把所有方法合并成一个巨大的 Repository 接口。可以继续用小而聚焦的 `UserRepository`、`FriendRepository`、`MessageRepository`，并仅向业务注入它实际需要的能力。一个 `Service` 持有多个 DAO 依赖并不自动等于架构错误，但当这些业务出现独立配置、独立生命周期、独立数据所有权或独立部署需求时，才是拆分 Service 或微服务的明确信号。当前阶段保留 `UserRepository`，等 friend、message 的真实用例出现后再决定边界，避免提前设计。
+增加 friend、message 后，可以继续让同一个 `Dao` 按 `user.go`、`friend.go`、`message.go` 分文件实现数据库操作，Service 仍只持有一个 DAO 字段，不会因为业务增长而增加一排 Repository 字段。当某块业务出现独立配置、独立生命周期、独立数据所有权或独立部署需求时，再拆 Service 或微服务。采用具体 DAO 后，成功 CRUD 路径更适合由 PostgreSQL 集成测试覆盖；输入校验、JWT 和未授权路径仍可作为不依赖数据库的单元测试。
+
+## 自己的资料与他人公开资料
+
+社交 IM 应把两类接口分开。自己的资料由访问令牌确定身份，可以返回手机号、邮箱、账号状态、注册时间和最后登录时间；查看别人资料由目标用户 ID 确定对象，只应返回昵称、头像、简介、地区等公开字段。即使当前字段看起来相似，也不应共用一个完整响应后再依靠调用方忽略敏感字段，因为新增字段时很容易发生越权泄露。
+
+当前 `GET /user-profile` 是“我的资料”接口，读取 `Authorization: Bearer <token>`。Service 验证 JWT 的签名、有效期和用户 ID，再按 token 中的用户 ID 查询数据库。请求不接受客户端提交的 user ID，可以避免用户把 ID 改成别人后读取私有资料。
+
+`GET /users/:user_id/profile` 是查看他人公开资料的接口，同样要求 Bearer Token，目标用户由路径中的 `user_id` 指定。它使用独立的 `ResOtherUserProfile`，只返回用户 ID、昵称、头像、简介、性别、生日和地区，不返回登录用户名、手机号、邮箱、账号状态、注册时间或最后登录时间。

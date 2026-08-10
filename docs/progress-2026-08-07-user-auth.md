@@ -11,6 +11,8 @@
 - Router 与 App 生命周期修订时间：2026-08-07 17:59:20 +08:00
 - App 配置与 HTTP 通用错误修订时间：2026-08-07 18:19:42 +08:00
 - VS Code 调试与 App 停止生命周期修订时间：2026-08-10 10:41:01 +08:00
+- 具体 DAO 与个人资料接口修订时间：2026-08-10 11:22:18 +08:00
+- Git 忽略与他人资料接口修订时间：2026-08-10 11:54:04 +08:00
 - 当前进度：100%，实现与验证均已完成。
 
 ## 已完成
@@ -98,3 +100,29 @@
 - PostgreSQL：`user=postgres password=123456 host=localhost port=5432 dbname=test sslmode=disable`。
 - HTTP 监听地址：`:8080`。
 - JWT 签名密钥：`myim-development-secret`。
+
+## 2026-08-10 具体 DAO 与个人资料接口修订
+
+- 删除 `UserRepository`，`service.Service` 直接持有一个具体 `*dao.Dao`，但 Service 仍不接触 `sql.DB` 或 SQL。
+- `user.proto` 中所有响应的 `error_code`、`error_msg` 增加行尾注释，并通过 `api/protobuf/gen.bat` 重新生成 `user.pb.go`。
+- 新增 `ResUserProfile` 协议和 `GET /user-profile`，从 Bearer Token 获取当前用户身份并返回不含密码的完整个人资料。
+- 明确“我的资料”和“他人公开资料”使用独立接口及响应字段，避免手机号、邮箱、登录时间等私有数据泄露。
+- Service 测试调整为输入校验、令牌拒绝和 HTTP 鉴权测试；具体 DAO 成功路径后续使用 PostgreSQL 集成测试覆盖。
+- 移除 `.gitignore` 对 `/test` 的忽略，使项目规定目录中的测试可以进入版本管理。
+- `go test -count=1 ./...`、`go vet ./...`、`go build ./...` 均通过。
+
+## JWT 使用说明与空请求协议修订
+
+- `user.proto` 增加空的 `ReqUserProfile`，并通过生成脚本更新 `user.pb.go`。
+- `skills/skill.md` 增加无参数 protobuf 请求也必须声明空 Request message 的规则。
+- 清理进度文档中每次修改的具体时间，并在 skill 中禁止继续记录此类时间。
+- face 文档增加 JWT 结构、签发、请求携带、校验、重复登录和失效机制知识。
+- `go test -count=1 ./...`、`go vet ./...`、`go build ./...` 均通过。
+
+## 2026-08-10 Git 忽略与他人资料接口修订
+
+- 恢复进度文档的具体时间记录，并在 skill 中恢复对应要求。
+- 确认 `/test/` 未被 Git 跟踪；`/docs/`、`/skills/` 已被忽略，但本轮 Git 索引移除因 `.git` 写权限审批失败而未完成。
+- 新增 `ReqOtherUserProfile`、`ResOtherUserProfile` 和 `GET /users/:user_id/profile`。
+- 他人资料接口要求 Bearer Token，只返回公开资料字段，不返回登录账号、联系方式、状态和登录时间。
+- `go test -count=1 ./...`、`go vet ./...`、`go build ./...` 均通过。

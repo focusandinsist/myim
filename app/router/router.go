@@ -23,5 +23,7 @@ func New(s *service.Service) *gin.Engine {
 	})
 	router.POST("/user-register", HandleCGUserRegister)
 	router.POST("/user-login", HandleCGUserLogin)
+	router.GET("/user-profile", HandleCGUserProfile)
+	router.GET("/users/:user_id/profile", HandleCGOtherUserProfile)
 	return router
 }

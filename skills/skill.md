@@ -10,7 +10,7 @@
 
 - 所有测试文件统一放在 `/test` 目录。
 - 所有文档文件统一放在 `/docs` 目录。
-- 每次更新代码都要同步 `/docs` 中的进度文档，记录时间、任务、进度、改动和验证结果。以及同步README.md
+- 每次更新代码都要同步 `/docs` 中的进度文档和 README，记录具体时间、任务、进度、改动和验证结果。
 - README 保存业务目标、当前架构和 agent 接续上下文；skill 只保存强制协作规则。
 
 ## 架构与实现
@@ -34,7 +34,8 @@
 
 - HTTP 请求支持 JSON 和 protobuf binding。
 - HTTP 响应统一通过 `internal/httpx.Response` 输出，根据 `Accept` 或请求 `Content-Type` 选择 protobuf 或 protobuf JSON。
-- 所有 protobuf 响应消息的前两个字段固定为 `int32 error_code = 1;` 和 `string error_msg = 2;`。
+- protobuf 请求即使没有参数，也必须声明对应的空 Request message，例如 `ReqUserProfile`。
+- 所有 protobuf 响应消息的前两个字段固定为 `int32 error_code = 1;` 和 `string error_msg = 2;`，并分别添加“错误码，0表示成功”和“错误信息”的行尾注释。
 - 修改 `.proto` 后必须重新生成对应的 `.pb.go`，不要手工修改生成文件。
 
 ## 用语约定
