@@ -57,7 +57,15 @@ application, err := app.New()
 err = application.Run()
 ```
 
-`app.New` 按配置、DAO、Service、Router、HTTP Server 的顺序组装依赖；`App.Run` 启动 HTTP Server、等待退出信号、优雅关闭连接，最后关闭 PostgreSQL。`app/router.New` 只构建 Gin middleware、handler 和路由。
+`app.New` 按配置、DAO、Service、Router、HTTP Server 的顺序组装依赖；`App.Run` 启动 HTTP Server并等待退出信号，`App.Stop` 只执行一次 HTTP 优雅关闭和 PostgreSQL 关闭。`app/router.New` 只构建 Gin middleware、handler 和路由。
+
+### `Run`、`Start` 与 `Stop`
+
+方法名应该表达阻塞语义。当前 `App.Run` 会一直阻塞，直到 HTTP Server 退出或进程收到停止信号，因此 `Run` 比 `Start` 更准确。工程中常见的 `Start` 通常只负责拉起 goroutine 或监听器，然后立即返回；如果把当前方法改名为 `Start`，调用方容易误判其行为。
+
+关闭逻辑单独放入 `Stop(ctx)` 有三个好处：外部测试或未来的生命周期管理器可以主动停止应用；HTTP 和数据库的关闭顺序集中在一个地方；未来增加 WebSocket、gRPC 或后台任务时有明确的资源回收入口。`Stop` 使用 `sync.Once` 保证资源只关闭一次，并用 `errors.Join` 保留多个资源各自的关闭错误。
+
+VS Code 的 `.vscode/launch.json` 使用 Go debug 类型，以 `app/cmd` 为程序入口、项目根目录为工作目录。调试器仍然执行完整的 `app.New -> App.Run` 生命周期，所以启动前 PostgreSQL 必须可用。
 
 ### 为什么增加根 App
 
@@ -311,3 +319,11 @@ SQL 原始字符串中的换行和缩进只会被视为空白，不改变语句�
 参考 `go-ws-srv/content-service` 后，当前采用“一个可部署服务模块对应一个 `Service`”的方式。`Service` 只保存 DAO、配置等共享依赖，内容、标签、评论等业务方法可以按不同文件组织，但仍挂在同一个 `Service` 上。只有模块之间具备独立依赖、生命周期或部署边界时，才继续拆成多个 Service。
 
 DTO 不是层数越多越好。当前 protobuf 请求和响应已经承担传输对象职责；只有当 HTTP、gRPC、内部任务等多个入口需要不同模型，或者业务层需要摆脱生成代码依赖时，再增加独立 DTO 更合适。
+
+### 为什么 Service 不直接使用 `sql.DB`
+
+`sql.DB` 是数据库连接池和 SQL 执行工具，不是用户业务能力。Service 如果直接使用它，就必须同时负责 SQL、表名、字段扫描和数据库错误转换，业务层会与 PostgreSQL 细节混在一起。当前由 DAO 持有 `sql.DB` 并实现 SQL，Service 只调用 `UserRepository` 描述的用户持久化能力。
+
+`UserRepository` 并不是所有小项目都必须存在。它目前最直接的价值是 service 测试可以注入内存 fake，不需要真实 PostgreSQL；以后也可以替换 DAO 实现，而不修改注册登录流程。如果项目只追求最少代码，也可以让 Service 依赖具体的 `*dao.Dao`，仍然由 DAO 执行 SQL，只是 service 测试会更依赖数据库或需要更重的测试方案。无论是否保留接口，都不建议让 Service 直接操作 `sql.DB`。
+
+增加 friend、message 后，不应把所有方法合并成一个巨大的 Repository 接口。可以继续用小而聚焦的 `UserRepository`、`FriendRepository`、`MessageRepository`，并仅向业务注入它实际需要的能力。一个 `Service` 持有多个 DAO 依赖并不自动等于架构错误，但当这些业务出现独立配置、独立生命周期、独立数据所有权或独立部署需求时，才是拆分 Service 或微服务的明确信号。当前阶段保留 `UserRepository`，等 friend、message 的真实用例出现后再决定边界，避免提前设计。

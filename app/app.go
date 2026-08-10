@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -20,6 +21,8 @@ type App struct {
 	config     *config.Config // 应用配置
 	dao        *dao.Dao       // PostgreSQL数据访问对象
 	httpServer *http.Server   // HTTP服务
+	stopOnce   sync.Once      // 保证应用资源只关闭一次
+	stopErr    error          // 保存资源关闭结果
 }
 
 func New() (*App, error) {
@@ -46,7 +49,6 @@ func New() (*App, error) {
 }
 
 func (a *App) Run() error {
-	defer a.dao.Close()
 	stopContext, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	serverError := make(chan error, 1)
@@ -56,16 +58,34 @@ func (a *App) Run() error {
 
 	select {
 	case err := <-serverError:
-		if errors.Is(err, http.ErrServerClosed) {
-			return nil
+		shutdownContext, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		stopErr := a.Stop(shutdownContext)
+		if !errors.Is(err, http.ErrServerClosed) {
+			err = fmt.Errorf("run http server: %w", err)
+			if stopErr != nil {
+				return errors.Join(err, stopErr)
+			}
+			return err
 		}
-		return fmt.Errorf("run http server: %w", err)
+		return stopErr
 	case <-stopContext.Done():
 		shutdownContext, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		if err := a.httpServer.Shutdown(shutdownContext); err != nil {
-			return fmt.Errorf("shutdown http server: %w", err)
-		}
-		return nil
+		return a.Stop(shutdownContext)
 	}
+}
+
+func (a *App) Stop(ctx context.Context) error {
+	a.stopOnce.Do(func() {
+		var stopErrors []error
+		if err := a.httpServer.Shutdown(ctx); err != nil {
+			stopErrors = append(stopErrors, fmt.Errorf("shutdown http server: %w", err))
+		}
+		if err := a.dao.Close(); err != nil {
+			stopErrors = append(stopErrors, fmt.Errorf("close dao: %w", err))
+		}
+		a.stopErr = errors.Join(stopErrors...)
+	})
+	return a.stopErr
 }

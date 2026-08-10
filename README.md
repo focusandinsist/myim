@@ -42,6 +42,8 @@ skills        本项目强制协作规则
 
 根 `app.App` 持有 Config、DAO 和 HTTP Server，负责创建 Service、Router，并统一管理启动与关闭。一个可部署模块对应一个 `service.Service`，不同业务可以拆到 `service/user.go`、`service/message.go` 等文件，但当前不增加嵌套 Service 或 DTO 层。
 
+`App.Run` 启动服务并阻塞等待退出，`App.Stop` 负责只执行一次 HTTP 优雅关闭和 DAO 关闭。VS Code 可以直接选择 `.vscode/launch.json` 中的 `Run myim` 配置启动调试；运行前需要保证固定配置所指向的 PostgreSQL 可连接。
+
 当前整个单体业务都位于 `app` 目录，因此 composition root 保持在 `app/app.go`。未来拆分微服务时，再按 `apps/<service>/internal/...` 整体迁移服务边界，不单独移动一个 App 文件。
 
 ### 当前接口

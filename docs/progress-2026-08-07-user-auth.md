@@ -10,6 +10,7 @@
 - HTTP 与 Agent 上下文修订时间：2026-08-07 17:39:36 +08:00
 - Router 与 App 生命周期修订时间：2026-08-07 17:59:20 +08:00
 - App 配置与 HTTP 通用错误修订时间：2026-08-07 18:19:42 +08:00
+- VS Code 调试与 App 停止生命周期修订时间：2026-08-10 10:41:01 +08:00
 - 当前进度：100%，实现与验证均已完成。
 
 ## 已完成
@@ -82,6 +83,15 @@
 - `go test -count=1 ./...`：通过，`myim/test` 注册登录测试通过。
 - `go vet ./...`：通过，无静态检查问题。
 - `go build ./...`：通过，所有包编译成功。
+
+## 2026-08-10 VS Code 调试与 App 生命周期修订
+
+- 新增 `.vscode/launch.json`，可从 VS Code 直接调试 `app/cmd` 入口。
+- 保留阻塞语义明确的 `App.Run`，没有改名为通常表示立即返回的 `Start`。
+- 新增 `App.Stop(ctx)`，统一关闭 HTTP Server 和 PostgreSQL DAO，并保证关闭逻辑只执行一次。
+- `Run` 在系统信号和 HTTP Server 退出两条路径上都调用 `Stop`，关闭失败时保留完整错误。
+- README 和 face 文档同步调试方式、生命周期命名以及 `UserRepository` 的收益与边界。
+- `go test -count=1 ./...`、`go vet ./...`、`go build ./...` 均通过。
 
 ## 当前固定配置
 
