@@ -203,7 +203,7 @@ func (s *Service) HandleCGUserLogin(ctx context.Context, input *proto_user.ReqUs
 	return output, nil
 }
 
-func (s *Service) HandleCGUserProfile(ctx context.Context, accessToken string) (output *proto_user.ResUserProfile, err error) {
+func (s *Service) HandleCGMyProfile(ctx context.Context, accessToken string) (output *proto_user.ResUserProfile, err error) {
 	output = new(proto_user.ResUserProfile)
 	claims, err := ValidateAccessToken(accessToken, s.config.JWTSecret)
 	if err != nil {
@@ -243,7 +243,7 @@ func (s *Service) HandleCGUserProfile(ctx context.Context, accessToken string) (
 	return output, nil
 }
 
-func (s *Service) HandleCGOtherUserProfile(ctx context.Context, input *proto_user.ReqOtherUserProfile, accessToken string) (output *proto_user.ResOtherUserProfile, err error) {
+func (s *Service) HandleCGTargetProfile(ctx context.Context, input *proto_user.ReqOtherUserProfile, accessToken string) (output *proto_user.ResOtherUserProfile, err error) {
 	output = new(proto_user.ResOtherUserProfile)
 	if _, err = ValidateAccessToken(accessToken, s.config.JWTSecret); err != nil {
 		output.ErrorCode = http.StatusUnauthorized

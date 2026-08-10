@@ -36,23 +36,30 @@ func HandleCGUserLogin(c *gin.Context) {
 	httpx.Response(c, output, err)
 }
 
-func HandleCGUserProfile(c *gin.Context) {
+func HandleCGMyProfile(c *gin.Context) {
 	accessToken := ""
 	authorization := strings.Fields(c.GetHeader("Authorization"))
 	if len(authorization) == 2 && strings.EqualFold(authorization[0], "Bearer") {
 		accessToken = authorization[1]
 	}
-	output, err := serv.HandleCGUserProfile(c.Request.Context(), accessToken)
+	output, err := serv.HandleCGMyProfile(c.Request.Context(), accessToken)
 	httpx.Response(c, output, err)
 }
 
-func HandleCGOtherUserProfile(c *gin.Context) {
-	input := &proto_user.ReqOtherUserProfile{UserId: c.Param("user_id")}
+func HandleCGTargetProfile(c *gin.Context) {
+	input := new(proto_user.ReqOtherUserProfile)
+	output := new(proto_user.ResOtherUserProfile)
+	if err := c.ShouldBind(input); err != nil {
+		output.ErrorCode = http.StatusBadRequest
+		output.ErrorMsg = httpx.ErrInvalidRequest.Error()
+		httpx.Response(c, output, httpx.ErrInvalidRequest)
+		return
+	}
 	accessToken := ""
 	authorization := strings.Fields(c.GetHeader("Authorization"))
 	if len(authorization) == 2 && strings.EqualFold(authorization[0], "Bearer") {
 		accessToken = authorization[1]
 	}
-	output, err := serv.HandleCGOtherUserProfile(c.Request.Context(), input, accessToken)
+	output, err := serv.HandleCGTargetProfile(c.Request.Context(), input, accessToken)
 	httpx.Response(c, output, err)
 }
