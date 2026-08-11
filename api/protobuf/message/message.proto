@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package protobuf;
+
+option go_package = "./api/protobuf/message;message";
+
+enum WSAction {
+    WS_ACTION_UNSPECIFIED = 0;
+    WS_ACTION_SEND_MESSAGE = 1;
+    WS_ACTION_MESSAGE_ACK = 2;
+    WS_ACTION_PUSH_MESSAGE = 3;
+    WS_ACTION_ERROR = 4;
+}
+
+enum MessageType {
+    MESSAGE_TYPE_UNSPECIFIED = 0;
+    MESSAGE_TYPE_TEXT = 1;
+}
+
+message ReqWSMessage {
+    WSAction action = 1; // 请求动作
+    string request_id = 2; // 客户端请求ID
+    string target_user_id = 3; // 目标用户ID
+    MessageType message_type = 4; // 消息类型
+    string content = 5; // 消息内容
+}
+
+message Message {
+    string message_id = 1; // 服务端消息ID
+    string request_id = 2; // 客户端请求ID
+    string sender_user_id = 3; // 发送用户ID
+    string target_user_id = 4; // 目标用户ID
+    MessageType message_type = 5; // 消息类型
+    string content = 6; // 消息内容
+    int64 sent_at = 7; // 服务端发送时间，Unix毫秒
+}
+
+message ResWSMessage {
+    int32 error_code = 1; // 错误码，0表示成功
+    string error_msg = 2; // 错误信息
+    WSAction action = 3; // 响应动作
+    string request_id = 4; // 对应的客户端请求ID
+    Message message = 5; // ACK或推送携带的消息
+}

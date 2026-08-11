@@ -23,11 +23,12 @@ import (
 )
 
 var (
-	ErrInvalidInput       = errors.New("invalid input")                   // 请求字段缺失或格式不符合业务要求
-	ErrUserNameExists     = errors.New("user name already exists")        // 注册用户名已被占用
-	ErrInvalidCredentials = errors.New("invalid user name or password")   // 登录用户名不存在或密码错误
-	ErrInvalidAccessToken = errors.New("invalid or expired access token") // 访问令牌无效、过期或所属用户不存在
-	ErrUserNotFound       = errors.New("user not found")                  // 目标用户不存在
+	ErrInvalidInput       = errors.New("invalid input")                 // 请求字段缺失或格式不符合业务要求
+	ErrUserNameExists     = errors.New("user name already exists")      // 注册用户名已被占用
+	ErrInvalidCredentials = errors.New("invalid user name or password") // 登录用户名不存在或密码错误
+	ErrInvalidAccessToken = errors.New("invalid access token")          // 访问令牌缺失、格式错误、签名无效或所属用户不存在
+	ErrExpiredAccessToken = errors.New("expired access token")          // 访问令牌已超过有效期
+	ErrUserNotFound       = errors.New("user not found")                // 目标用户不存在
 )
 
 const defaultTokenExpiry = 24 * time.Hour
@@ -208,8 +209,8 @@ func (s *Service) HandleCGMyProfile(ctx context.Context, accessToken string) (ou
 	claims, err := ValidateAccessToken(accessToken, s.config.JWTSecret)
 	if err != nil {
 		output.ErrorCode = http.StatusUnauthorized
-		output.ErrorMsg = ErrInvalidAccessToken.Error()
-		return output, ErrInvalidAccessToken
+		output.ErrorMsg = err.Error()
+		return output, err
 	}
 
 	user, err := s.dao.GetUserByUserID(ctx, claims.UserID)
@@ -247,8 +248,8 @@ func (s *Service) HandleCGTargetProfile(ctx context.Context, input *proto_user.R
 	output = new(proto_user.ResTargetProfile)
 	if _, err = ValidateAccessToken(accessToken, s.config.JWTSecret); err != nil {
 		output.ErrorCode = http.StatusUnauthorized
-		output.ErrorMsg = ErrInvalidAccessToken.Error()
-		return output, ErrInvalidAccessToken
+		output.ErrorMsg = err.Error()
+		return output, err
 	}
 	if input == nil || uuid.Validate(input.GetUserId()) != nil {
 		err = fmt.Errorf("%w: valid user_id is required", ErrInvalidInput)
@@ -298,20 +299,23 @@ func generateAccessToken(claims AccessTokenClaims, secret string) (string, error
 func ValidateAccessToken(token, secret string) (*AccessTokenClaims, error) {
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 || secret == "" {
-		return nil, errors.New("invalid access token")
+		return nil, ErrInvalidAccessToken
 	}
 	expected := signToken(parts[0]+"."+parts[1], secret)
 	actual, err := base64.RawURLEncoding.DecodeString(parts[2])
 	if err != nil || !hmac.Equal(actual, expected) {
-		return nil, errors.New("invalid access token")
+		return nil, ErrInvalidAccessToken
 	}
 	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
-		return nil, errors.New("invalid access token")
+		return nil, ErrInvalidAccessToken
 	}
 	claims := new(AccessTokenClaims)
-	if err := json.Unmarshal(payload, claims); err != nil || claims.UserID == "" || claims.ExpiresAt <= time.Now().Unix() {
-		return nil, errors.New("invalid or expired access token")
+	if err := json.Unmarshal(payload, claims); err != nil || claims.UserID == "" || claims.ExpiresAt <= 0 {
+		return nil, ErrInvalidAccessToken
+	}
+	if claims.ExpiresAt <= time.Now().Unix() {
+		return nil, ErrExpiredAccessToken
 	}
 	return claims, nil
 }

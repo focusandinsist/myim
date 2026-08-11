@@ -1,0 +1,80 @@
+package app
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
+
+	"myim/apps/message-service/config"
+	"myim/apps/message-service/router"
+	"myim/apps/message-service/service"
+)
+
+type App struct {
+	config     *config.Config   // message service配置
+	service    *service.Service // message业务服务
+	httpServer *http.Server     // HTTP和WebSocket服务
+	stopOnce   sync.Once        // 保证应用资源只关闭一次
+	stopErr    error            // 保存资源关闭结果
+}
+
+func New() *App {
+	conf := config.New()
+	serv := service.New(conf)
+	handler := router.New(conf, serv)
+	return &App{
+		config:  conf,
+		service: serv,
+		httpServer: &http.Server{
+			Addr:              conf.Addr,
+			Handler:           handler,
+			ReadHeaderTimeout: 5 * time.Second,
+			IdleTimeout:       60 * time.Second,
+			MaxHeaderBytes:    1 << 20,
+		},
+	}
+}
+
+func (a *App) Run() error {
+	stopContext, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	serverError := make(chan error, 1)
+	go func() {
+		serverError <- a.httpServer.ListenAndServe()
+	}()
+
+	select {
+	case err := <-serverError:
+		shutdownContext, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		stopErr := a.Stop(shutdownContext)
+		if !errors.Is(err, http.ErrServerClosed) {
+			err = fmt.Errorf("run message server: %w", err)
+			if stopErr != nil {
+				return errors.Join(err, stopErr)
+			}
+			return err
+		}
+		return stopErr
+	case <-stopContext.Done():
+		shutdownContext, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		return a.Stop(shutdownContext)
+	}
+}
+
+func (a *App) Stop(ctx context.Context) error {
+	a.stopOnce.Do(func() {
+		a.service.Stop()
+		if err := a.httpServer.Shutdown(ctx); err != nil {
+			a.stopErr = fmt.Errorf("shutdown message server: %w", err)
+		}
+	})
+	return a.stopErr
+}
