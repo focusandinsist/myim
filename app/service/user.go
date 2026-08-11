@@ -41,8 +41,8 @@ type AccessTokenClaims struct {
 	ExpiresAt int64  `json:"exp"`       // 过期时间，Unix秒
 }
 
-func (s *Service) HandleCGUserRegister(ctx context.Context, input *proto_user.ReqUserRegister) (output *proto_user.ResUserRegister, err error) {
-	output = new(proto_user.ResUserRegister)
+func (s *Service) HandleCGUserRegister(ctx context.Context, input *proto_user.CGUserRegister) (output *proto_user.GCUserRegister, err error) {
+	output = new(proto_user.GCUserRegister)
 	if input == nil {
 		err = fmt.Errorf("%w: request is required", ErrInvalidInput)
 		output.ErrorCode = http.StatusBadRequest
@@ -139,8 +139,8 @@ func (s *Service) HandleCGUserRegister(ctx context.Context, input *proto_user.Re
 	return output, nil
 }
 
-func (s *Service) HandleCGUserLogin(ctx context.Context, input *proto_user.ReqUserLogin) (output *proto_user.ResUserLogin, err error) {
-	output = new(proto_user.ResUserLogin)
+func (s *Service) HandleCGUserLogin(ctx context.Context, input *proto_user.CGUserLogin) (output *proto_user.GCUserLogin, err error) {
+	output = new(proto_user.GCUserLogin)
 	if input == nil {
 		err = fmt.Errorf("%w: request is required", ErrInvalidInput)
 		output.ErrorCode = http.StatusBadRequest
@@ -204,8 +204,8 @@ func (s *Service) HandleCGUserLogin(ctx context.Context, input *proto_user.ReqUs
 	return output, nil
 }
 
-func (s *Service) HandleCGMyProfile(ctx context.Context, accessToken string) (output *proto_user.ResMyProfile, err error) {
-	output = new(proto_user.ResMyProfile)
+func (s *Service) HandleCGMyProfile(ctx context.Context, accessToken string) (output *proto_user.GCMyProfile, err error) {
+	output = new(proto_user.GCMyProfile)
 	claims, err := ValidateAccessToken(accessToken, s.config.JWTSecret)
 	if err != nil {
 		output.ErrorCode = http.StatusUnauthorized
@@ -244,8 +244,8 @@ func (s *Service) HandleCGMyProfile(ctx context.Context, accessToken string) (ou
 	return output, nil
 }
 
-func (s *Service) HandleCGTargetProfile(ctx context.Context, input *proto_user.ReqTargetProfile, accessToken string) (output *proto_user.ResTargetProfile, err error) {
-	output = new(proto_user.ResTargetProfile)
+func (s *Service) HandleCGTargetProfile(ctx context.Context, input *proto_user.CGTargetProfile, accessToken string) (output *proto_user.GCTargetProfile, err error) {
+	output = new(proto_user.GCTargetProfile)
 	if _, err = ValidateAccessToken(accessToken, s.config.JWTSecret); err != nil {
 		output.ErrorCode = http.StatusUnauthorized
 		output.ErrorMsg = err.Error()

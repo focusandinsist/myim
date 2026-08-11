@@ -39,7 +39,7 @@ func New(c *config.Config) *Service {
 	}
 }
 
-func (s *Service) HandleConnection(userID string, conn *websocket.Conn) {
+func (s *Service) HandleCGConnection(userID string, conn *websocket.Conn) {
 	client := &client{
 		userID: userID,
 		conn:   conn,
@@ -88,7 +88,7 @@ func (s *Service) readMessages(client *client) {
 			continue
 		}
 
-		input := new(proto_message.ReqWSMessage)
+		input := new(proto_message.CGWSMessage)
 		if err := proto.Unmarshal(payload, input); err != nil {
 			s.sendError(client, "", http.StatusBadRequest, "invalid protobuf message")
 			continue
@@ -132,7 +132,7 @@ func (s *Service) readMessages(client *client) {
 			s.sendError(client, input.GetRequestId(), http.StatusNotFound, "target user is offline")
 			continue
 		}
-		if !target.enqueue(&proto_message.ResWSMessage{
+		if !target.enqueue(&proto_message.GCWSMessage{
 			ErrorMsg:  "ok",
 			Action:    proto_message.WSAction_WS_ACTION_PUSH_MESSAGE,
 			RequestId: input.GetRequestId(),
@@ -141,7 +141,7 @@ func (s *Service) readMessages(client *client) {
 			s.sendError(client, input.GetRequestId(), http.StatusServiceUnavailable, "target connection is busy")
 			continue
 		}
-		client.enqueue(&proto_message.ResWSMessage{
+		client.enqueue(&proto_message.GCWSMessage{
 			ErrorMsg:  "ok",
 			Action:    proto_message.WSAction_WS_ACTION_MESSAGE_ACK,
 			RequestId: input.GetRequestId(),
@@ -175,7 +175,7 @@ func (s *Service) writeMessages(client *client) {
 }
 
 func (s *Service) sendError(client *client, requestID string, errorCode int32, errorMessage string) {
-	client.enqueue(&proto_message.ResWSMessage{
+	client.enqueue(&proto_message.GCWSMessage{
 		ErrorCode: errorCode,
 		ErrorMsg:  errorMessage,
 		Action:    proto_message.WSAction_WS_ACTION_ERROR,
@@ -183,7 +183,7 @@ func (s *Service) sendError(client *client, requestID string, errorCode int32, e
 	})
 }
 
-func (c *client) enqueue(output *proto_message.ResWSMessage) bool {
+func (c *client) enqueue(output *proto_message.GCWSMessage) bool {
 	payload, err := proto.Marshal(output)
 	if err != nil {
 		return false

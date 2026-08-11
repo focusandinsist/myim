@@ -11,8 +11,8 @@ import (
 )
 
 func HandleCGUserRegister(c *gin.Context) {
-	input := new(proto_user.ReqUserRegister)
-	output := new(proto_user.ResUserRegister)
+	input := new(proto_user.CGUserRegister)
+	output := new(proto_user.GCUserRegister)
 	if err := c.ShouldBind(input); err != nil {
 		output.ErrorCode = http.StatusBadRequest
 		output.ErrorMsg = httpx.ErrInvalidRequest.Error()
@@ -24,8 +24,8 @@ func HandleCGUserRegister(c *gin.Context) {
 }
 
 func HandleCGUserLogin(c *gin.Context) {
-	input := new(proto_user.ReqUserLogin)
-	output := new(proto_user.ResUserLogin)
+	input := new(proto_user.CGUserLogin)
+	output := new(proto_user.GCUserLogin)
 	if err := c.ShouldBind(input); err != nil {
 		output.ErrorCode = http.StatusBadRequest
 		output.ErrorMsg = httpx.ErrInvalidRequest.Error()
@@ -47,8 +47,8 @@ func HandleCGMyProfile(c *gin.Context) {
 }
 
 func HandleCGTargetProfile(c *gin.Context) {
-	input := new(proto_user.ReqTargetProfile)
-	output := new(proto_user.ResTargetProfile)
+	input := new(proto_user.CGTargetProfile)
+	output := new(proto_user.GCTargetProfile)
 	if err := c.ShouldBind(input); err != nil {
 		output.ErrorCode = http.StatusBadRequest
 		output.ErrorMsg = httpx.ErrInvalidRequest.Error()

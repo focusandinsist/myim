@@ -27,7 +27,7 @@ message Message {
     int64 sent_at = 7; // 服务端接收消息的时间，Unix毫秒
 }
 
-message ReqWSMessage {
+message CGWSMessage {
     WSAction action = 1; // WebSocket请求动作
     string request_id = 2; // 客户端生成的请求ID
     string target_user_id = 3; // 接收方用户ID
@@ -35,7 +35,7 @@ message ReqWSMessage {
     string content = 5; // 消息内容
 }
 
-message ResWSMessage {
+message GCWSMessage {
     int32 error_code = 1; // 错误码，0表示成功
     string error_msg = 2; // 错误信息
     WSAction action = 3; // WebSocket响应动作

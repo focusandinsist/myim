@@ -27,7 +27,7 @@ func New(conf *config.Config, serv *service.Service) *gin.Engine {
 
 	upgrader := websocket.Upgrader{HandshakeTimeout: 5 * time.Second}
 	router.GET("/ws", func(c *gin.Context) {
-		output := new(proto_message.ResWSMessage)
+		output := new(proto_message.GCWSMessage)
 		authorization := strings.Fields(c.GetHeader("Authorization"))
 		if len(authorization) != 2 || !strings.EqualFold(authorization[0], "Bearer") {
 			output.ErrorCode = http.StatusUnauthorized
@@ -46,7 +46,7 @@ func New(conf *config.Config, serv *service.Service) *gin.Engine {
 		if err != nil {
 			return
 		}
-		serv.HandleConnection(claims.UserID, conn)
+		serv.HandleCGConnection(claims.UserID, conn)
 	})
 
 	return router

@@ -4,23 +4,23 @@ package protobuf;
 
 option go_package = "./api/protobuf/user;user";
 
-message ReqUserRegister {
+message CGUserRegister {
     string user_name = 1; // 用户名
     string password = 2; // 密码
 }
 
-message ResUserRegister {
+message GCUserRegister {
     int32 error_code = 1; // 错误码，0表示成功
     string error_msg = 2; // 错误信息
     string user_id = 3; // 用户ID
 }
 
-message ReqUserLogin {
+message CGUserLogin {
     string user_name = 1; // 用户名
     string password = 2; // 密码
 }
 
-message ResUserLogin {
+message GCUserLogin {
     int32 error_code = 1; // 错误码，0表示成功
     string error_msg = 2; // 错误信息
     string user_id = 3; // 用户ID
@@ -28,10 +28,10 @@ message ResUserLogin {
     int64 expires_at = 5; // 令牌过期时间，Unix秒
 }
 
-message ReqMyProfile {
+message CGMyProfile {
 }
 
-message ResMyProfile {
+message GCMyProfile {
     int32 error_code = 1; // 错误码，0表示成功
     string error_msg = 2; // 错误信息
     string user_id = 3; // 用户ID
@@ -50,11 +50,11 @@ message ResMyProfile {
     int64 updated_time = 16; // 最后更新时间，Unix秒
 }
 
-message ReqTargetProfile {
+message CGTargetProfile {
     string user_id = 1; // 目标用户ID
 }
 
-message ResTargetProfile {
+message GCTargetProfile {
     int32 error_code = 1; // 错误码，0表示成功
     string error_msg = 2; // 错误信息
     string user_id = 3; // 用户ID
