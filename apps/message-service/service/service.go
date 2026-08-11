@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"sync"
@@ -9,6 +10,8 @@ import (
 
 	proto_message "myim/api/protobuf/message"
 	"myim/apps/message-service/config"
+	"myim/apps/message-service/dao"
+	"myim/apps/message-service/model"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -27,19 +30,21 @@ type client struct {
 
 type Service struct {
 	config  *config.Config     // message service配置
+	dao     *dao.Dao           // message PostgreSQL数据访问对象
 	clients map[string]*client // 当前实例中的用户连接
 	mu      sync.RWMutex       // 保护用户连接集合
 	stopped bool               // 服务是否已经停止接收连接
 }
 
-func New(c *config.Config) *Service {
+func New(c *config.Config, dao *dao.Dao) *Service {
 	return &Service{
 		config:  c,
+		dao:     dao,
 		clients: make(map[string]*client),
 	}
 }
 
-func (s *Service) HandleCGConnection(userID string, conn *websocket.Conn) {
+func (s *Service) HandleCGConnection(ctx context.Context, userID string, conn *websocket.Conn) {
 	client := &client{
 		userID: userID,
 		conn:   conn,
@@ -61,7 +66,7 @@ func (s *Service) HandleCGConnection(userID string, conn *websocket.Conn) {
 	}
 
 	go s.writeMessages(client)
-	s.readMessages(client)
+	s.readMessages(ctx, client)
 
 	s.mu.Lock()
 	if s.clients[userID] == client {
@@ -71,7 +76,7 @@ func (s *Service) HandleCGConnection(userID string, conn *websocket.Conn) {
 	client.stop()
 }
 
-func (s *Service) readMessages(client *client) {
+func (s *Service) readMessages(ctx context.Context, client *client) {
 	client.conn.SetReadLimit(s.config.ReadLimit)
 	client.conn.SetReadDeadline(time.Now().Add(s.config.PongWait))
 	client.conn.SetPongHandler(func(string) error {
@@ -115,21 +120,51 @@ func (s *Service) readMessages(client *client) {
 			continue
 		}
 
+		conversationID := client.userID + ":" + input.GetTargetUserId()
+		if client.userID > input.GetTargetUserId() {
+			conversationID = input.GetTargetUserId() + ":" + client.userID
+		}
+		persisted, err := s.dao.SaveMessage(ctx, &model.Message{
+			MessageID:      uuid.NewString(),
+			RequestID:      input.GetRequestId(),
+			ConversationID: conversationID,
+			SenderUserID:   client.userID,
+			TargetUserID:   input.GetTargetUserId(),
+			MessageType:    int32(input.GetMessageType()),
+			Content:        content,
+			SentAt:         time.Now().UnixMilli(),
+		})
+		if err != nil {
+			s.sendError(client, input.GetRequestId(), http.StatusInternalServerError, "persist message failed")
+			continue
+		}
+		if persisted.TargetUserID != input.GetTargetUserId() ||
+			persisted.MessageType != int32(input.GetMessageType()) ||
+			persisted.Content != content {
+			s.sendError(client, input.GetRequestId(), http.StatusConflict, "request_id has already been used")
+			continue
+		}
+
 		message := &proto_message.Message{
-			MessageId:    uuid.NewString(),
-			RequestId:    input.GetRequestId(),
-			SenderUserId: client.userID,
-			TargetUserId: input.GetTargetUserId(),
-			MessageType:  input.GetMessageType(),
-			Content:      content,
-			SentAt:       time.Now().UnixMilli(),
+			MessageId:    persisted.MessageID,
+			RequestId:    persisted.RequestID,
+			SenderUserId: persisted.SenderUserID,
+			TargetUserId: persisted.TargetUserID,
+			MessageType:  proto_message.MessageType(persisted.MessageType),
+			Content:      persisted.Content,
+			SentAt:       persisted.SentAt,
 		}
 
 		s.mu.RLock()
 		target := s.clients[message.TargetUserId]
 		s.mu.RUnlock()
 		if target == nil {
-			s.sendError(client, input.GetRequestId(), http.StatusNotFound, "target user is offline")
+			client.enqueue(&proto_message.GCWSMessage{
+				ErrorMsg:  "ok",
+				Action:    proto_message.WSAction_WS_ACTION_MESSAGE_ACK,
+				RequestId: input.GetRequestId(),
+				Message:   message,
+			})
 			continue
 		}
 		if !target.enqueue(&proto_message.GCWSMessage{
@@ -138,7 +173,12 @@ func (s *Service) readMessages(client *client) {
 			RequestId: input.GetRequestId(),
 			Message:   message,
 		}) {
-			s.sendError(client, input.GetRequestId(), http.StatusServiceUnavailable, "target connection is busy")
+			client.enqueue(&proto_message.GCWSMessage{
+				ErrorMsg:  "ok",
+				Action:    proto_message.WSAction_WS_ACTION_MESSAGE_ACK,
+				RequestId: input.GetRequestId(),
+				Message:   message,
+			})
 			continue
 		}
 		client.enqueue(&proto_message.GCWSMessage{

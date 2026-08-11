@@ -46,7 +46,7 @@ func New(conf *config.Config, serv *service.Service) *gin.Engine {
 		if err != nil {
 			return
 		}
-		serv.HandleCGConnection(claims.UserID, conn)
+		serv.HandleCGConnection(c.Request.Context(), claims.UserID, conn)
 	})
 
 	return router

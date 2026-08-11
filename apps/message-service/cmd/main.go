@@ -7,7 +7,10 @@ import (
 )
 
 func main() {
-	application := messageapp.New()
+	application, err := messageapp.New()
+	if err != nil {
+		log.Fatal(err)
+	}
 	if err := application.Run(); err != nil {
 		log.Fatal(err)
 	}

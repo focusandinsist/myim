@@ -12,24 +12,31 @@ import (
 	"time"
 
 	"myim/apps/message-service/config"
+	"myim/apps/message-service/dao"
 	"myim/apps/message-service/router"
 	"myim/apps/message-service/service"
 )
 
 type App struct {
 	config     *config.Config   // message service配置
+	dao        *dao.Dao         // message PostgreSQL数据访问对象
 	service    *service.Service // message业务服务
 	httpServer *http.Server     // HTTP和WebSocket服务
 	stopOnce   sync.Once        // 保证应用资源只关闭一次
 	stopErr    error            // 保存资源关闭结果
 }
 
-func New() *App {
+func New() (*App, error) {
 	conf := config.New()
-	serv := service.New(conf)
+	dao, err := dao.New(conf)
+	if err != nil {
+		return nil, err
+	}
+	serv := service.New(conf, dao)
 	handler := router.New(conf, serv)
 	return &App{
 		config:  conf,
+		dao:     dao,
 		service: serv,
 		httpServer: &http.Server{
 			Addr:              conf.Addr,
@@ -38,7 +45,7 @@ func New() *App {
 			IdleTimeout:       60 * time.Second,
 			MaxHeaderBytes:    1 << 20,
 		},
-	}
+	}, nil
 }
 
 func (a *App) Run() error {
@@ -71,10 +78,15 @@ func (a *App) Run() error {
 
 func (a *App) Stop(ctx context.Context) error {
 	a.stopOnce.Do(func() {
+		var stopErrors []error
 		a.service.Stop()
 		if err := a.httpServer.Shutdown(ctx); err != nil {
-			a.stopErr = fmt.Errorf("shutdown message server: %w", err)
+			stopErrors = append(stopErrors, fmt.Errorf("shutdown message server: %w", err))
 		}
+		if err := a.dao.Close(); err != nil {
+			stopErrors = append(stopErrors, fmt.Errorf("close message dao: %w", err))
+		}
+		a.stopErr = errors.Join(stopErrors...)
 	})
 	return a.stopErr
 }

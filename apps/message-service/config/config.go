@@ -3,6 +3,7 @@ package config
 import "time"
 
 type Config struct {
+	Dsn           string        // PostgreSQL连接串
 	Addr          string        // HTTP和WebSocket监听地址
 	JWTSecret     string        // JWT签名密钥
 	ReadLimit     int64         // 单个WebSocket消息最大字节数
@@ -14,6 +15,7 @@ type Config struct {
 
 func New() *Config {
 	return &Config{
+		Dsn:           "user=postgres password=123456 host=localhost port=5432 dbname=test sslmode=disable",
 		Addr:          ":8081",
 		JWTSecret:     "myim-development-secret",
 		ReadLimit:     32 * 1024,
