@@ -120,14 +120,10 @@ func (s *Service) readMessages(ctx context.Context, client *client) {
 			continue
 		}
 
-		conversationID := client.userID + ":" + input.GetTargetUserId()
-		if client.userID > input.GetTargetUserId() {
-			conversationID = input.GetTargetUserId() + ":" + client.userID
-		}
 		persisted, err := s.dao.SaveMessage(ctx, &model.Message{
 			MessageID:      uuid.NewString(),
 			RequestID:      input.GetRequestId(),
-			ConversationID: conversationID,
+			ConversationID: uuid.NewString(),
 			SenderUserID:   client.userID,
 			TargetUserID:   input.GetTargetUserId(),
 			MessageType:    int32(input.GetMessageType()),
@@ -146,13 +142,15 @@ func (s *Service) readMessages(ctx context.Context, client *client) {
 		}
 
 		message := &proto_message.Message{
-			MessageId:    persisted.MessageID,
-			RequestId:    persisted.RequestID,
-			SenderUserId: persisted.SenderUserID,
-			TargetUserId: persisted.TargetUserID,
-			MessageType:  proto_message.MessageType(persisted.MessageType),
-			Content:      persisted.Content,
-			SentAt:       persisted.SentAt,
+			MessageId:      persisted.MessageID,
+			RequestId:      persisted.RequestID,
+			SenderUserId:   persisted.SenderUserID,
+			TargetUserId:   persisted.TargetUserID,
+			MessageType:    proto_message.MessageType(persisted.MessageType),
+			Content:        persisted.Content,
+			SentAt:         persisted.SentAt,
+			ConversationId: persisted.ConversationID,
+			Seq:            persisted.Seq,
 		}
 
 		s.mu.RLock()

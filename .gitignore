@@ -29,4 +29,6 @@ bazel-*
 /test/
 /docs/
 /skills/
+/client/
+/README.md
 /.gocache/
