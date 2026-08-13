@@ -8,6 +8,21 @@
       "mode": "debug",
       "program": "${workspaceFolder}/app/cmd",
       "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Run message service",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/apps/message-service/cmd",
+      "cwd": "${workspaceFolder}"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Run user + message services",
+      "configurations": ["Run myim", "Run message service"],
+      "stopAll": true
     }
   ]
 }

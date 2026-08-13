@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package protobuf;
+
+option go_package = "./api/protobuf/message;message";
+
+enum WSAction {
+    WS_ACTION_UNSPECIFIED = 0; // 未指定动作
+    WS_ACTION_SEND_MESSAGE = 1; // 客户端发送消息
+    WS_ACTION_MESSAGE_ACK = 2; // 服务端返回消息确认
+    WS_ACTION_PUSH_MESSAGE = 3; // 服务端向目标用户推送消息
+    WS_ACTION_ERROR = 4; // 服务端返回错误
+}
+
+enum MessageType {
+    MESSAGE_TYPE_UNSPECIFIED = 0; // 未指定消息类型
+    MESSAGE_TYPE_TEXT = 1; // 文本消息
+}
+
+message Message {
+    string message_id = 1; // 服务端生成的唯一消息ID
+    string request_id = 2; // 客户端生成的请求ID
+    string sender_user_id = 3; // 发送方用户ID
+    string target_user_id = 4; // 单聊接收方用户ID
+    MessageType message_type = 5; // 消息类型
+    string content = 6; // 消息内容
+    int64 sent_at = 7; // 服务端接收消息的时间，Unix毫秒
+    string conversation_id = 8; // 消息所属会话ID
+    int64 seq = 9; // 会话内递增消息序号
+}
+
+message CGWSMessage {
+    WSAction action = 1; // WebSocket请求动作
+    string request_id = 2; // 客户端生成的请求ID
+    string target_user_id = 3; // 单聊接收方用户ID
+    MessageType message_type = 4; // 消息类型
+    string content = 5; // 消息内容
+}
+
+message GCWSMessage {
+    int32 error_code = 1; // 错误码，0表示成功
+    string error_msg = 2; // 错误信息
+    WSAction action = 3; // WebSocket响应动作
+    string request_id = 4; // 对应的客户端请求ID
+    Message message = 5; // 消息确认或推送携带的消息体
+}

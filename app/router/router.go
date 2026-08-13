@@ -14,7 +14,7 @@ func New(s *service.Service) *gin.Engine {
 	serv = s
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())
-	if err := router.SetTrustedProxies(nil); err != nil {
+	if err := router.SetTrustedProxies([]string{"127.0.0.1", "::1"}); err != nil {
 		panic(err)
 	}
 
