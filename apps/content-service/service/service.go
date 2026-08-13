@@ -12,22 +12,26 @@ import (
 	proto "myim/api/protobuf/content"
 	"myim/apps/content-service/config"
 	contentdao "myim/apps/content-service/dao"
+	"myim/apps/content-service/event"
 	"myim/apps/content-service/model"
 	userservice "myim/apps/user-service/service"
 )
 
 var (
-	ErrInvalidInput = errors.New("invalid input")
-	ErrForbidden    = errors.New("forbidden")
-	ErrUserNotFound = errors.New("user not found")
+	ErrInvalidInput = errors.New("invalid input")  // 请求字段缺失或格式不符合业务要求
+	ErrForbidden    = errors.New("forbidden")      // 当前用户没有修改目标资源的权限
+	ErrUserNotFound = errors.New("user not found") // 目标用户不存在
 )
 
 type Service struct {
-	config *config.Config
-	dao    *contentdao.Dao
+	config    *config.Config
+	dao       *contentdao.Dao
+	publisher event.Publisher // Content事件发布器
 }
 
-func New(c *config.Config, d *contentdao.Dao) *Service { return &Service{config: c, dao: d} }
+func New(c *config.Config, d *contentdao.Dao) *Service {
+	return &Service{config: c, dao: d, publisher: event.LogPublisher{}}
+}
 func (s *Service) user(token string) (string, error) {
 	parts := strings.Fields(token)
 	if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
@@ -39,7 +43,6 @@ func (s *Service) user(token string) (string, error) {
 	}
 	return claims.UserID, nil
 }
-func setErr(code int, e error, msg *string) error { *msg = e.Error(); _ = code; return e }
 func toItem(c *model.Content) *proto.ContentItem {
 	p := &proto.ContentItem{ContentId: c.ContentID, AuthorUserId: c.AuthorUserID, Text: c.Text, MediaUrls: c.MediaURLs, Status: c.Status, LikeCount: c.LikeCount, CommentCount: c.CommentCount, CreatedAt: c.CreatedAt.Unix(), UpdatedAt: c.UpdatedAt.Unix()}
 	if c.PublishedAt != nil {
@@ -182,6 +185,10 @@ func (s *Service) HandleCGContentLike(ctx context.Context, in *proto.CGContentLi
 	}
 	o.LikeCount = n
 	o.Liked = true
+	uid, _ := s.user(t)
+	if payload, eventErr := event.LikeEnvelope("content.liked.v1", in.GetContentId(), uid, true); eventErr == nil {
+		_ = s.publisher.Publish(event.TopicContentEvents, in.GetContentId(), payload)
+	}
 	o.ErrorMsg = "ok"
 	return o, nil
 }
@@ -193,6 +200,10 @@ func (s *Service) HandleCGContentUnlike(ctx context.Context, in *proto.CGContent
 		return o, e
 	}
 	o.LikeCount = n
+	uid, _ := s.user(t)
+	if payload, eventErr := event.LikeEnvelope("content.unliked.v1", in.GetContentId(), uid, false); eventErr == nil {
+		_ = s.publisher.Publish(event.TopicContentEvents, in.GetContentId(), payload)
+	}
 	o.ErrorMsg = "ok"
 	return o, nil
 }

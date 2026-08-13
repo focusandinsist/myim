@@ -247,9 +247,9 @@ type CGContentCreate struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Text      string   `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
-	MediaUrls []string `protobuf:"bytes,2,rep,name=media_urls,json=mediaUrls,proto3" json:"media_urls,omitempty"`
-	Publish   bool     `protobuf:"varint,3,opt,name=publish,proto3" json:"publish,omitempty"`
+	Text      string   `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`                            // 动态文本
+	MediaUrls []string `protobuf:"bytes,2,rep,name=media_urls,json=mediaUrls,proto3" json:"media_urls,omitempty"` // 图片URL列表
+	Publish   bool     `protobuf:"varint,3,opt,name=publish,proto3" json:"publish,omitempty"`                     // 是否直接发布
 }
 
 func (x *CGContentCreate) Reset() {
@@ -310,9 +310,9 @@ type GCContentCreate struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ErrorCode int32        `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
-	ErrorMsg  string       `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`
-	Content   *ContentItem `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
+	ErrorCode int32        `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"` // 错误码，0表示成功
+	ErrorMsg  string       `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`     // 错误信息
+	Content   *ContentItem `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`                       // 创建的动态
 }
 
 func (x *GCContentCreate) Reset() {
@@ -373,7 +373,7 @@ type CGContentPublish struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ContentId string `protobuf:"bytes,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	ContentId string `protobuf:"bytes,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"` // 动态ID
 }
 
 func (x *CGContentPublish) Reset() {
@@ -420,9 +420,9 @@ type GCContentPublish struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ErrorCode int32        `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
-	ErrorMsg  string       `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`
-	Content   *ContentItem `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
+	ErrorCode int32        `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"` // 错误码，0表示成功
+	ErrorMsg  string       `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`     // 错误信息
+	Content   *ContentItem `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`                       // 发布后的动态
 }
 
 func (x *GCContentPublish) Reset() {
@@ -483,7 +483,7 @@ type CGContentGet struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ContentId string `protobuf:"bytes,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	ContentId string `protobuf:"bytes,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"` // 动态ID
 }
 
 func (x *CGContentGet) Reset() {
@@ -530,9 +530,9 @@ type GCContentGet struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ErrorCode int32        `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
-	ErrorMsg  string       `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`
-	Content   *ContentItem `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
+	ErrorCode int32        `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"` // 错误码，0表示成功
+	ErrorMsg  string       `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`     // 错误信息
+	Content   *ContentItem `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`                       // 动态详情
 }
 
 func (x *GCContentGet) Reset() {
@@ -593,9 +593,9 @@ type CGContentList struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	UserId   string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Page     int32  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`
-	PageSize int32  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	UserId   string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`        // 作者用户ID
+	Page     int32  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`                         // 页码
+	PageSize int32  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"` // 每页数量
 }
 
 func (x *CGContentList) Reset() {
@@ -656,9 +656,9 @@ type GCContentList struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ErrorCode int32          `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
-	ErrorMsg  string         `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`
-	Contents  []*ContentItem `protobuf:"bytes,3,rep,name=contents,proto3" json:"contents,omitempty"`
+	ErrorCode int32          `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"` // 错误码，0表示成功
+	ErrorMsg  string         `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`     // 错误信息
+	Contents  []*ContentItem `protobuf:"bytes,3,rep,name=contents,proto3" json:"contents,omitempty"`                     // 动态列表
 }
 
 func (x *GCContentList) Reset() {
@@ -719,7 +719,7 @@ type CGContentDelete struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ContentId string `protobuf:"bytes,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	ContentId string `protobuf:"bytes,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"` // 动态ID
 }
 
 func (x *CGContentDelete) Reset() {
@@ -766,8 +766,8 @@ type GCContentDelete struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ErrorCode int32  `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
-	ErrorMsg  string `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`
+	ErrorCode int32  `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"` // 错误码，0表示成功
+	ErrorMsg  string `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`     // 错误信息
 }
 
 func (x *GCContentDelete) Reset() {
@@ -821,7 +821,7 @@ type CGContentLike struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ContentId string `protobuf:"bytes,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	ContentId string `protobuf:"bytes,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"` // 动态ID
 }
 
 func (x *CGContentLike) Reset() {
@@ -868,10 +868,10 @@ type GCContentLike struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ErrorCode int32  `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
-	ErrorMsg  string `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`
-	LikeCount int64  `protobuf:"varint,3,opt,name=like_count,json=likeCount,proto3" json:"like_count,omitempty"`
-	Liked     bool   `protobuf:"varint,4,opt,name=liked,proto3" json:"liked,omitempty"`
+	ErrorCode int32  `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"` // 错误码，0表示成功
+	ErrorMsg  string `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`     // 错误信息
+	LikeCount int64  `protobuf:"varint,3,opt,name=like_count,json=likeCount,proto3" json:"like_count,omitempty"` // 点赞数
+	Liked     bool   `protobuf:"varint,4,opt,name=liked,proto3" json:"liked,omitempty"`                          // 当前用户是否已点赞
 }
 
 func (x *GCContentLike) Reset() {
@@ -939,7 +939,7 @@ type CGContentUnlike struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ContentId string `protobuf:"bytes,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	ContentId string `protobuf:"bytes,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"` // 动态ID
 }
 
 func (x *CGContentUnlike) Reset() {
@@ -986,10 +986,10 @@ type GCContentUnlike struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ErrorCode int32  `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
-	ErrorMsg  string `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`
-	LikeCount int64  `protobuf:"varint,3,opt,name=like_count,json=likeCount,proto3" json:"like_count,omitempty"`
-	Liked     bool   `protobuf:"varint,4,opt,name=liked,proto3" json:"liked,omitempty"`
+	ErrorCode int32  `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"` // 错误码，0表示成功
+	ErrorMsg  string `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`     // 错误信息
+	LikeCount int64  `protobuf:"varint,3,opt,name=like_count,json=likeCount,proto3" json:"like_count,omitempty"` // 点赞数
+	Liked     bool   `protobuf:"varint,4,opt,name=liked,proto3" json:"liked,omitempty"`                          // 当前用户是否已点赞
 }
 
 func (x *GCContentUnlike) Reset() {
@@ -1057,9 +1057,9 @@ type CGContentComment struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ContentId string `protobuf:"bytes,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
-	ParentId  string `protobuf:"bytes,2,opt,name=parent_id,json=parentId,proto3" json:"parent_id,omitempty"`
-	Text      string `protobuf:"bytes,3,opt,name=text,proto3" json:"text,omitempty"`
+	ContentId string `protobuf:"bytes,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"` // 动态ID
+	ParentId  string `protobuf:"bytes,2,opt,name=parent_id,json=parentId,proto3" json:"parent_id,omitempty"`    // 父评论ID
+	Text      string `protobuf:"bytes,3,opt,name=text,proto3" json:"text,omitempty"`                            // 评论文本
 }
 
 func (x *CGContentComment) Reset() {
@@ -1120,9 +1120,9 @@ type GCContentComment struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ErrorCode int32        `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
-	ErrorMsg  string       `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`
-	Comment   *CommentItem `protobuf:"bytes,3,opt,name=comment,proto3" json:"comment,omitempty"`
+	ErrorCode int32        `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"` // 错误码，0表示成功
+	ErrorMsg  string       `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`     // 错误信息
+	Comment   *CommentItem `protobuf:"bytes,3,opt,name=comment,proto3" json:"comment,omitempty"`                       // 创建的评论
 }
 
 func (x *GCContentComment) Reset() {
@@ -1183,9 +1183,9 @@ type CGContentComments struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ContentId string `protobuf:"bytes,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
-	Page      int32  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`
-	PageSize  int32  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	ContentId string `protobuf:"bytes,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"` // 动态ID
+	Page      int32  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`                           // 页码
+	PageSize  int32  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`   // 每页数量
 }
 
 func (x *CGContentComments) Reset() {
@@ -1246,9 +1246,9 @@ type GCContentComments struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ErrorCode int32          `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
-	ErrorMsg  string         `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`
-	Comments  []*CommentItem `protobuf:"bytes,3,rep,name=comments,proto3" json:"comments,omitempty"`
+	ErrorCode int32          `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"` // 错误码，0表示成功
+	ErrorMsg  string         `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`     // 错误信息
+	Comments  []*CommentItem `protobuf:"bytes,3,rep,name=comments,proto3" json:"comments,omitempty"`                     // 评论列表
 }
 
 func (x *GCContentComments) Reset() {
@@ -1309,7 +1309,7 @@ type CGContentCommentDelete struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	CommentId string `protobuf:"bytes,1,opt,name=comment_id,json=commentId,proto3" json:"comment_id,omitempty"`
+	CommentId string `protobuf:"bytes,1,opt,name=comment_id,json=commentId,proto3" json:"comment_id,omitempty"` // 评论ID
 }
 
 func (x *CGContentCommentDelete) Reset() {
@@ -1356,8 +1356,8 @@ type GCContentCommentDelete struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ErrorCode int32  `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
-	ErrorMsg  string `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`
+	ErrorCode int32  `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"` // 错误码，0表示成功
+	ErrorMsg  string `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`     // 错误信息
 }
 
 func (x *GCContentCommentDelete) Reset() {
@@ -1411,7 +1411,7 @@ type CGSocialFollow struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	UserId string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserId string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"` // 被关注用户ID
 }
 
 func (x *CGSocialFollow) Reset() {
@@ -1458,9 +1458,9 @@ type GCSocialFollow struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ErrorCode int32  `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
-	ErrorMsg  string `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`
-	Following bool   `protobuf:"varint,3,opt,name=following,proto3" json:"following,omitempty"`
+	ErrorCode int32  `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"` // 错误码，0表示成功
+	ErrorMsg  string `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`     // 错误信息
+	Following bool   `protobuf:"varint,3,opt,name=following,proto3" json:"following,omitempty"`                  // 当前是否已关注
 }
 
 func (x *GCSocialFollow) Reset() {
@@ -1521,7 +1521,7 @@ type CGSocialUnfollow struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	UserId string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserId string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"` // 被取消关注用户ID
 }
 
 func (x *CGSocialUnfollow) Reset() {
@@ -1568,9 +1568,9 @@ type GCSocialUnfollow struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ErrorCode int32  `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
-	ErrorMsg  string `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`
-	Following bool   `protobuf:"varint,3,opt,name=following,proto3" json:"following,omitempty"`
+	ErrorCode int32  `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"` // 错误码，0表示成功
+	ErrorMsg  string `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`     // 错误信息
+	Following bool   `protobuf:"varint,3,opt,name=following,proto3" json:"following,omitempty"`                  // 当前是否已关注
 }
 
 func (x *GCSocialUnfollow) Reset() {
