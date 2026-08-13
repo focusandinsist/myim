@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package protobuf;
+
+option go_package = "./api/protobuf/content;content";
+
+message ContentItem {
+    string content_id = 1; // 动态ID
+    string author_user_id = 2; // 作者用户ID
+    string text = 3; // 动态文本
+    repeated string media_urls = 4; // 图片URL列表
+    int32 status = 5; // 状态：1草稿，2已发布，3已删除
+    int64 like_count = 6; // 点赞数
+    int64 comment_count = 7; // 评论数
+    int64 created_at = 8; // 创建时间，Unix秒
+    int64 published_at = 9; // 发布时间，Unix秒
+    int64 updated_at = 10; // 更新时间，Unix秒
+    bool liked = 11; // 当前用户是否已点赞
+}
+
+message CommentItem {
+    string comment_id = 1; // 评论ID
+    string content_id = 2; // 动态ID
+    string author_user_id = 3; // 评论作者用户ID
+    string parent_id = 4; // 父评论ID
+    string text = 5; // 评论内容
+    int32 status = 6; // 状态：1有效，2已删除
+    int64 created_at = 7; // 创建时间，Unix秒
+}
+
+message CGContentCreate { string text = 1; repeated string media_urls = 2; bool publish = 3; }
+message GCContentCreate { int32 error_code = 1; string error_msg = 2; ContentItem content = 3; }
+message CGContentPublish { string content_id = 1; }
+message GCContentPublish { int32 error_code = 1; string error_msg = 2; ContentItem content = 3; }
+message CGContentGet { string content_id = 1; }
+message GCContentGet { int32 error_code = 1; string error_msg = 2; ContentItem content = 3; }
+message CGContentList { string user_id = 1; int32 page = 2; int32 page_size = 3; }
+message GCContentList { int32 error_code = 1; string error_msg = 2; repeated ContentItem contents = 3; }
+message CGContentDelete { string content_id = 1; }
+message GCContentDelete { int32 error_code = 1; string error_msg = 2; }
+message CGContentLike { string content_id = 1; }
+message GCContentLike { int32 error_code = 1; string error_msg = 2; int64 like_count = 3; bool liked = 4; }
+message CGContentUnlike { string content_id = 1; }
+message GCContentUnlike { int32 error_code = 1; string error_msg = 2; int64 like_count = 3; bool liked = 4; }
+message CGContentComment { string content_id = 1; string parent_id = 2; string text = 3; }
+message GCContentComment { int32 error_code = 1; string error_msg = 2; CommentItem comment = 3; }
+message CGContentComments { string content_id = 1; int32 page = 2; int32 page_size = 3; }
+message GCContentComments { int32 error_code = 1; string error_msg = 2; repeated CommentItem comments = 3; }
+message CGContentCommentDelete { string comment_id = 1; }
+message GCContentCommentDelete { int32 error_code = 1; string error_msg = 2; }
+message CGSocialFollow { string user_id = 1; }
+message GCSocialFollow { int32 error_code = 1; string error_msg = 2; bool following = 3; }
+message CGSocialUnfollow { string user_id = 1; }
+message GCSocialUnfollow { int32 error_code = 1; string error_msg = 2; bool following = 3; }
