@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"myim/app/config"
+	"myim/apps/user-service/config"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )

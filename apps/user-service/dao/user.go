@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"myim/app/model"
+	"myim/apps/user-service/model"
 
 	"github.com/jackc/pgx/v5/pgconn"
 )

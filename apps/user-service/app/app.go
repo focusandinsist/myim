@@ -11,10 +11,10 @@ import (
 	"syscall"
 	"time"
 
-	"myim/app/config"
-	"myim/app/dao"
-	"myim/app/router"
-	"myim/app/service"
+	"myim/apps/user-service/config"
+	"myim/apps/user-service/dao"
+	"myim/apps/user-service/router"
+	"myim/apps/user-service/service"
 )
 
 type App struct {

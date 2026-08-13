@@ -1,8 +1,8 @@
 package service
 
 import (
-	"myim/app/config"
-	"myim/app/dao"
+	"myim/apps/user-service/config"
+	"myim/apps/user-service/dao"
 )
 
 type Service struct {
