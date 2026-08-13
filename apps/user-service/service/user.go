@@ -15,8 +15,8 @@ import (
 	"unicode/utf8"
 
 	proto_user "myim/api/protobuf/user"
-	"myim/app/dao"
-	"myim/app/model"
+	"myim/apps/user-service/dao"
+	"myim/apps/user-service/model"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"

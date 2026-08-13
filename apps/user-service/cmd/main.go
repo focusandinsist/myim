@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"myim/app"
+	"myim/apps/user-service/app"
 )
 
 func main() {

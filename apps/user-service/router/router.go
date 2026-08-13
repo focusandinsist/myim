@@ -3,7 +3,7 @@ package router
 import (
 	"net/http"
 
-	"myim/app/service"
+	"myim/apps/user-service/service"
 
 	"github.com/gin-gonic/gin"
 )
