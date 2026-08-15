@@ -9,5 +9,11 @@ type Config struct {
 }
 
 func New() *Config {
-	return &Config{Dsn: "user=postgres password=123456 host=localhost port=5432 dbname=test sslmode=disable", Addr: ":8082", JWTSecret: "myim-development-secret", KafkaBrokers: []string{"127.0.0.1:9092"}, KafkaTopic: "content-events"}
+	return &Config{
+		Dsn:          "user=postgres password=123456 host=localhost port=5432 dbname=test sslmode=disable",
+		Addr:         ":8082",
+		JWTSecret:    "myim-development-secret",
+		KafkaBrokers: []string{"127.0.0.1:9092"},
+		KafkaTopic:   "content-events",
+	}
 }

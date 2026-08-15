@@ -22,12 +22,14 @@ type Envelope struct {
 }
 
 type Publisher interface {
-	Publish(topic, key string, value []byte) error
-} // 事件发布接口
+	Publish(topic, key string, value []byte) error // 发布一个事件
+}
 
 type LogPublisher struct{} // 未配置Kafka时的本地事件发布器
 
-type SaramaPublisher struct{ producer sarama.SyncProducer } // Kafka同步事件发布器
+type SaramaPublisher struct {
+	producer sarama.SyncProducer // Sarama同步生产者
+}
 
 func NewSaramaPublisher(brokers []string) (*SaramaPublisher, error) {
 	config := sarama.NewConfig()
@@ -46,7 +48,9 @@ func (p *SaramaPublisher) Publish(topic, key string, value []byte) error {
 	return err
 }
 
-func (p *SaramaPublisher) Close() error { return p.producer.Close() }
+func (p *SaramaPublisher) Close() error {
+	return p.producer.Close()
+}
 
 func (LogPublisher) Publish(topic, key string, value []byte) error {
 	log.Printf("content event topic=%s key=%s payload=%s", topic, key, value)
@@ -54,9 +58,21 @@ func (LogPublisher) Publish(topic, key string, value []byte) error {
 }
 
 func LikeEnvelope(eventType, contentID, userID string, liked bool) ([]byte, error) {
-	payload, err := json.Marshal(map[string]any{"content_id": contentID, "user_id": userID, "liked": liked})
+	payload, err := json.Marshal(map[string]any{
+		"content_id": contentID,
+		"user_id":    userID,
+		"liked":      liked,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("marshal like event payload: %w", err)
 	}
-	return json.Marshal(Envelope{EventID: fmt.Sprintf("%s-%s-%s", eventType, contentID, userID), EventType: eventType, EventVersion: 1, AggregateID: contentID, OccurredAt: time.Now().UTC(), Producer: "content-service", Payload: payload})
+	return json.Marshal(Envelope{
+		EventID:      fmt.Sprintf("%s-%s-%s", eventType, contentID, userID),
+		EventType:    eventType,
+		EventVersion: 1,
+		AggregateID:  contentID,
+		OccurredAt:   time.Now().UTC(),
+		Producer:     "content-service",
+		Payload:      payload,
+	})
 }

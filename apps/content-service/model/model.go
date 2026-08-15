@@ -3,11 +3,11 @@ package model
 import "time"
 
 const (
-	StatusDraft     = 1
-	StatusPublished = 2
-	StatusDeleted   = 3
-	CommentActive   = 1
-	CommentDeleted  = 2
+	StatusDraft     = 1 // 草稿状态
+	StatusPublished = 2 // 已发布状态
+	StatusDeleted   = 3 // 已删除状态
+	CommentActive   = 1 // 有效评论状态
+	CommentDeleted  = 2 // 已删除评论状态
 )
 
 type Content struct {
