@@ -217,16 +217,16 @@ func (s *Service) like(ctx context.Context, id, token string, active bool) (int6
 	return s.dao.ToggleLike(ctx, id, uid, active)
 }
 
-func (s *Service) HandleCGContentLike(ctx context.Context, in *proto.CGContentLike, t string) (*proto.GCContentLike, error) {
+func (s *Service) HandleCGContentLike(ctx context.Context, in *proto.CGContentLike, accessToken string) (*proto.GCContentLike, error) {
 	o := new(proto.GCContentLike)
-	n, e := s.like(ctx, in.GetContentId(), t, true)
+	n, e := s.like(ctx, in.GetContentId(), accessToken, true)
 	if e != nil {
 		o.ErrorCode = http.StatusUnauthorized
 		return o, e
 	}
 	o.LikeCount = n
 	o.Liked = true
-	uid, _ := s.user(t)
+	uid, _ := s.user(accessToken)
 	if payload, eventErr := event.LikeEnvelope("content.liked.v1", in.GetContentId(), uid, true); eventErr == nil {
 		_ = s.publisher.Publish(event.TopicContentEvents, in.GetContentId(), payload)
 	}
@@ -234,15 +234,15 @@ func (s *Service) HandleCGContentLike(ctx context.Context, in *proto.CGContentLi
 	return o, nil
 }
 
-func (s *Service) HandleCGContentUnlike(ctx context.Context, in *proto.CGContentUnlike, t string) (*proto.GCContentUnlike, error) {
+func (s *Service) HandleCGContentUnlike(ctx context.Context, in *proto.CGContentUnlike, accessToken string) (*proto.GCContentUnlike, error) {
 	o := new(proto.GCContentUnlike)
-	n, e := s.like(ctx, in.GetContentId(), t, false)
+	n, e := s.like(ctx, in.GetContentId(), accessToken, false)
 	if e != nil {
 		o.ErrorCode = http.StatusUnauthorized
 		return o, e
 	}
 	o.LikeCount = n
-	uid, _ := s.user(t)
+	uid, _ := s.user(accessToken)
 	if payload, eventErr := event.LikeEnvelope("content.unliked.v1", in.GetContentId(), uid, false); eventErr == nil {
 		_ = s.publisher.Publish(event.TopicContentEvents, in.GetContentId(), payload)
 	}
@@ -250,9 +250,9 @@ func (s *Service) HandleCGContentUnlike(ctx context.Context, in *proto.CGContent
 	return o, nil
 }
 
-func (s *Service) HandleCGContentComment(ctx context.Context, in *proto.CGContentComment, t string) (*proto.GCContentComment, error) {
+func (s *Service) HandleCGContentComment(ctx context.Context, in *proto.CGContentComment, accessToken string) (*proto.GCContentComment, error) {
 	o := new(proto.GCContentComment)
-	uid, e := s.user(t)
+	uid, e := s.user(accessToken)
 	if e != nil {
 		o.ErrorCode = http.StatusUnauthorized
 		return o, e
@@ -290,9 +290,9 @@ func (s *Service) HandleCGContentComment(ctx context.Context, in *proto.CGConten
 	return o, nil
 }
 
-func (s *Service) HandleCGContentComments(ctx context.Context, in *proto.CGContentComments, t string) (*proto.GCContentComments, error) {
+func (s *Service) HandleCGContentComments(ctx context.Context, in *proto.CGContentComments, accessToken string) (*proto.GCContentComments, error) {
 	o := new(proto.GCContentComments)
-	if _, e := s.user(t); e != nil {
+	if _, e := s.user(accessToken); e != nil {
 		o.ErrorCode = http.StatusUnauthorized
 		return o, e
 	}
@@ -316,9 +316,9 @@ func (s *Service) HandleCGContentComments(ctx context.Context, in *proto.CGConte
 	return o, nil
 }
 
-func (s *Service) HandleCGContentCommentDelete(ctx context.Context, in *proto.CGContentCommentDelete, t string) (*proto.GCContentCommentDelete, error) {
+func (s *Service) HandleCGContentCommentDelete(ctx context.Context, in *proto.CGContentCommentDelete, accessToken string) (*proto.GCContentCommentDelete, error) {
 	o := new(proto.GCContentCommentDelete)
-	uid, err := s.user(t)
+	uid, err := s.user(accessToken)
 	if err != nil {
 		o.ErrorCode = http.StatusUnauthorized
 		return o, err
@@ -335,8 +335,8 @@ func (s *Service) HandleCGContentCommentDelete(ctx context.Context, in *proto.CG
 	return o, nil
 }
 
-func (s *Service) follow(ctx context.Context, in *proto.CGSocialFollow, t string, active bool) error {
-	uid, e := s.user(t)
+func (s *Service) follow(ctx context.Context, in *proto.CGSocialFollow, accessToken string, active bool) error {
+	uid, e := s.user(accessToken)
 	if e != nil {
 		return e
 	}
@@ -349,9 +349,9 @@ func (s *Service) follow(ctx context.Context, in *proto.CGSocialFollow, t string
 	return s.dao.Follow(ctx, uid, in.UserId, active)
 }
 
-func (s *Service) HandleCGSocialFollow(ctx context.Context, in *proto.CGSocialFollow, t string) (*proto.GCSocialFollow, error) {
+func (s *Service) HandleCGSocialFollow(ctx context.Context, in *proto.CGSocialFollow, accessToken string) (*proto.GCSocialFollow, error) {
 	o := new(proto.GCSocialFollow)
-	e := s.follow(ctx, in, t, true)
+	e := s.follow(ctx, in, accessToken, true)
 	if e != nil {
 		o.ErrorCode = http.StatusBadRequest
 		return o, e
@@ -361,9 +361,9 @@ func (s *Service) HandleCGSocialFollow(ctx context.Context, in *proto.CGSocialFo
 	return o, nil
 }
 
-func (s *Service) HandleCGSocialUnfollow(ctx context.Context, in *proto.CGSocialUnfollow, t string) (*proto.GCSocialUnfollow, error) {
+func (s *Service) HandleCGSocialUnfollow(ctx context.Context, in *proto.CGSocialUnfollow, accessToken string) (*proto.GCSocialUnfollow, error) {
 	o := new(proto.GCSocialUnfollow)
-	e := s.follow(ctx, &proto.CGSocialFollow{UserId: in.UserId}, t, false)
+	e := s.follow(ctx, &proto.CGSocialFollow{UserId: in.UserId}, accessToken, false)
 	if e != nil {
 		o.ErrorCode = http.StatusBadRequest
 		return o, e
