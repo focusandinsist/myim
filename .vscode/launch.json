@@ -16,12 +16,20 @@
       "mode": "debug",
       "program": "${workspaceFolder}/apps/message-service/cmd",
       "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Run content service",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/apps/content-service/cmd",
+      "cwd": "${workspaceFolder}"
     }
   ],
   "compounds": [
     {
-      "name": "Run user + message services",
-      "configurations": ["Run user service", "Run message service"],
+      "name": "Run user + message + content services",
+      "configurations": ["Run user service", "Run message service", "Run content service"],
       "stopAll": true
     }
   ]

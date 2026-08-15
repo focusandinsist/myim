@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	_ "github.com/jackc/pgx/v5/stdlib"
+
 	"myim/apps/content-service/config"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type Dao struct{ db *sql.DB }
@@ -40,4 +42,5 @@ CREATE TABLE IF NOT EXISTS follows (follower_user_id VARCHAR(36) NOT NULL, follo
 	}
 	return nil
 }
+
 func (d *Dao) Close() error { return d.db.Close() }

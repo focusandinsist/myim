@@ -29,8 +29,18 @@ type Service struct {
 	publisher event.Publisher // Content事件发布器
 }
 
+func (s *Service) Stop() {
+	if publisher, ok := s.publisher.(interface{ Close() error }); ok {
+		_ = publisher.Close()
+	}
+}
+
 func New(c *config.Config, d *contentdao.Dao) *Service {
-	return &Service{config: c, dao: d, publisher: event.LogPublisher{}}
+	publisher := event.Publisher(event.LogPublisher{})
+	if kafkaPublisher, err := event.NewSaramaPublisher(c.KafkaBrokers); err == nil {
+		publisher = kafkaPublisher
+	}
+	return &Service{config: c, dao: d, publisher: publisher}
 }
 func (s *Service) user(token string) (string, error) {
 	parts := strings.Fields(token)

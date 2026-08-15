@@ -15,8 +15,9 @@ import (
 )
 
 type App struct {
-	dao    *dao.Dao
-	server *http.Server
+	dao     *dao.Dao
+	service *service.Service
+	server  *http.Server
 }
 
 func New() (*App, error) {
@@ -25,7 +26,8 @@ func New() (*App, error) {
 	if e != nil {
 		return nil, e
 	}
-	return &App{dao: d, server: &http.Server{Addr: c.Addr, Handler: router.New(service.New(c, d)), ReadHeaderTimeout: 5 * time.Second}}, nil
+	serv := service.New(c, d)
+	return &App{dao: d, service: serv, server: &http.Server{Addr: c.Addr, Handler: router.New(serv), ReadHeaderTimeout: 5 * time.Second}}, nil
 }
 func (a *App) Run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -39,6 +41,7 @@ func (a *App) Run() error {
 		}
 		return e
 	case <-ctx.Done():
+		a.service.Stop()
 		c, x := context.WithTimeout(context.Background(), 5*time.Second)
 		defer x()
 		_ = a.server.Shutdown(c)

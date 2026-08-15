@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/IBM/sarama"
 )
 
 const TopicContentEvents = "content-events" // Content业务事件主题
@@ -24,6 +26,27 @@ type Publisher interface {
 } // 事件发布接口
 
 type LogPublisher struct{} // 未配置Kafka时的本地事件发布器
+
+type SaramaPublisher struct{ producer sarama.SyncProducer } // Kafka同步事件发布器
+
+func NewSaramaPublisher(brokers []string) (*SaramaPublisher, error) {
+	config := sarama.NewConfig()
+	config.Producer.RequiredAcks = sarama.WaitForAll
+	config.Producer.Return.Successes = true
+	config.Producer.Retry.Max = 3
+	producer, err := sarama.NewSyncProducer(brokers, config)
+	if err != nil {
+		return nil, fmt.Errorf("create kafka producer: %w", err)
+	}
+	return &SaramaPublisher{producer: producer}, nil
+}
+
+func (p *SaramaPublisher) Publish(topic, key string, value []byte) error {
+	_, _, err := p.producer.SendMessage(&sarama.ProducerMessage{Topic: topic, Key: sarama.StringEncoder(key), Value: sarama.ByteEncoder(value)})
+	return err
+}
+
+func (p *SaramaPublisher) Close() error { return p.producer.Close() }
 
 func (LogPublisher) Publish(topic, key string, value []byte) error {
 	log.Printf("content event topic=%s key=%s payload=%s", topic, key, value)
