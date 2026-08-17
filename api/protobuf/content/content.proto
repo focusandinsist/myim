@@ -1,0 +1,145 @@
+syntax = "proto3";
+
+package protobuf;
+
+option go_package = "./api/protobuf/content;content";
+
+message ContentItem {
+    string content_id = 1; // 动态ID
+    string author_user_id = 2; // 作者用户ID
+    string text = 3; // 动态文本
+    repeated string media_urls = 4; // 图片URL列表
+    int32 status = 5; // 状态：1草稿，2已发布，3已删除
+    int64 like_count = 6; // 点赞数
+    int64 comment_count = 7; // 评论数
+    int64 created_at = 8; // 创建时间，Unix秒
+    int64 published_at = 9; // 发布时间，Unix秒
+    int64 updated_at = 10; // 更新时间，Unix秒
+    bool liked = 11; // 当前用户是否已点赞
+}
+
+message CommentItem {
+    string comment_id = 1; // 评论ID
+    string content_id = 2; // 动态ID
+    string author_user_id = 3; // 评论作者用户ID
+    string parent_id = 4; // 父评论ID
+    string text = 5; // 评论内容
+    int32 status = 6; // 状态：1有效，2已删除
+    int64 created_at = 7; // 创建时间，Unix秒
+}
+
+message CGContentCreate {
+    string text = 1; // 动态文本
+    repeated string media_urls = 2; // 图片URL列表
+    bool publish = 3; // 是否直接发布
+}
+message GCContentCreate {
+    int32 error_code = 1; // 错误码，0表示成功
+    string error_msg = 2; // 错误信息
+    ContentItem content = 3; // 创建的动态
+}
+
+message CGContentPublish {
+    string content_id = 1; // 动态ID
+}
+message GCContentPublish {
+    int32 error_code = 1; // 错误码，0表示成功
+    string error_msg = 2; // 错误信息
+    ContentItem content = 3; // 发布后的动态
+}
+
+message CGContentGet {
+    string content_id = 1; // 动态ID
+}
+message GCContentGet {
+    int32 error_code = 1; // 错误码，0表示成功
+    string error_msg = 2; // 错误信息
+    ContentItem content = 3; // 动态详情
+}
+
+message CGContentList {
+    string user_id = 1; // 作者用户ID
+    int32 page = 2; // 页码
+    int32 page_size = 3; // 每页数量
+}
+message GCContentList {
+    int32 error_code = 1; // 错误码，0表示成功
+    string error_msg = 2; // 错误信息
+    repeated ContentItem contents = 3; // 动态列表
+}
+
+message CGContentDelete {
+    string content_id = 1; // 动态ID
+}
+message GCContentDelete {
+    int32 error_code = 1; // 错误码，0表示成功
+    string error_msg = 2; // 错误信息
+}
+
+message CGContentLike {
+    string content_id = 1; // 动态ID
+}
+message GCContentLike {
+    int32 error_code = 1; // 错误码，0表示成功
+    string error_msg = 2; // 错误信息
+    int64 like_count = 3; // 点赞数
+    bool liked = 4; // 当前用户是否已点赞
+}
+
+message CGContentUnlike {
+    string content_id = 1; // 动态ID
+}
+message GCContentUnlike {
+    int32 error_code = 1; // 错误码，0表示成功
+    string error_msg = 2; // 错误信息
+    int64 like_count = 3; // 点赞数
+    bool liked = 4; // 当前用户是否已点赞
+}
+
+message CGContentComment {
+    string content_id = 1; // 动态ID
+    string parent_id = 2; // 父评论ID
+    string text = 3; // 评论文本
+}
+message GCContentComment {
+    int32 error_code = 1; // 错误码，0表示成功
+    string error_msg = 2; // 错误信息
+    CommentItem comment = 3; // 创建的评论
+}
+
+message CGContentComments {
+    string content_id = 1; // 动态ID
+    int32 page = 2; // 页码
+    int32 page_size = 3; // 每页数量
+}
+message GCContentComments {
+    int32 error_code = 1; // 错误码，0表示成功
+    string error_msg = 2; // 错误信息
+    repeated CommentItem comments = 3; // 评论列表
+}
+
+message CGContentCommentDelete {
+    string comment_id = 1; // 评论ID
+}
+message GCContentCommentDelete {
+    int32 error_code = 1; // 错误码，0表示成功
+    string error_msg = 2; // 错误信息
+}
+
+message CGSocialFollow {
+    string user_id = 1; // 被关注用户ID
+}
+message GCSocialFollow {
+    int32 error_code = 1; // 错误码，0表示成功
+    string error_msg = 2; // 错误信息
+    bool following = 3; // 当前是否已关注
+}
+
+message CGSocialUnfollow {
+    string user_id = 1; // 被取消关注用户ID
+}
+message GCSocialUnfollow {
+    int32 error_code = 1; // 错误码，0表示成功
+    string error_msg = 2; // 错误信息
+    bool following = 3; // 当前是否已关注
+}
