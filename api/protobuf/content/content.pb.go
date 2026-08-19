@@ -1406,226 +1406,6 @@ func (x *GCContentCommentDelete) GetErrorMsg() string {
 	return ""
 }
 
-type CGSocialFollow struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	UserId string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"` // 被关注用户ID
-}
-
-func (x *CGSocialFollow) Reset() {
-	*x = CGSocialFollow{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_content_content_proto_msgTypes[22]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *CGSocialFollow) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CGSocialFollow) ProtoMessage() {}
-
-func (x *CGSocialFollow) ProtoReflect() protoreflect.Message {
-	mi := &file_content_content_proto_msgTypes[22]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CGSocialFollow.ProtoReflect.Descriptor instead.
-func (*CGSocialFollow) Descriptor() ([]byte, []int) {
-	return file_content_content_proto_rawDescGZIP(), []int{22}
-}
-
-func (x *CGSocialFollow) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
-type GCSocialFollow struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	ErrorCode int32  `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"` // 错误码，0表示成功
-	ErrorMsg  string `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`     // 错误信息
-	Following bool   `protobuf:"varint,3,opt,name=following,proto3" json:"following,omitempty"`                  // 当前是否已关注
-}
-
-func (x *GCSocialFollow) Reset() {
-	*x = GCSocialFollow{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_content_content_proto_msgTypes[23]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GCSocialFollow) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GCSocialFollow) ProtoMessage() {}
-
-func (x *GCSocialFollow) ProtoReflect() protoreflect.Message {
-	mi := &file_content_content_proto_msgTypes[23]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GCSocialFollow.ProtoReflect.Descriptor instead.
-func (*GCSocialFollow) Descriptor() ([]byte, []int) {
-	return file_content_content_proto_rawDescGZIP(), []int{23}
-}
-
-func (x *GCSocialFollow) GetErrorCode() int32 {
-	if x != nil {
-		return x.ErrorCode
-	}
-	return 0
-}
-
-func (x *GCSocialFollow) GetErrorMsg() string {
-	if x != nil {
-		return x.ErrorMsg
-	}
-	return ""
-}
-
-func (x *GCSocialFollow) GetFollowing() bool {
-	if x != nil {
-		return x.Following
-	}
-	return false
-}
-
-type CGSocialUnfollow struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	UserId string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"` // 被取消关注用户ID
-}
-
-func (x *CGSocialUnfollow) Reset() {
-	*x = CGSocialUnfollow{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_content_content_proto_msgTypes[24]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *CGSocialUnfollow) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CGSocialUnfollow) ProtoMessage() {}
-
-func (x *CGSocialUnfollow) ProtoReflect() protoreflect.Message {
-	mi := &file_content_content_proto_msgTypes[24]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CGSocialUnfollow.ProtoReflect.Descriptor instead.
-func (*CGSocialUnfollow) Descriptor() ([]byte, []int) {
-	return file_content_content_proto_rawDescGZIP(), []int{24}
-}
-
-func (x *CGSocialUnfollow) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
-type GCSocialUnfollow struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	ErrorCode int32  `protobuf:"varint,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"` // 错误码，0表示成功
-	ErrorMsg  string `protobuf:"bytes,2,opt,name=error_msg,json=errorMsg,proto3" json:"error_msg,omitempty"`     // 错误信息
-	Following bool   `protobuf:"varint,3,opt,name=following,proto3" json:"following,omitempty"`                  // 当前是否已关注
-}
-
-func (x *GCSocialUnfollow) Reset() {
-	*x = GCSocialUnfollow{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_content_content_proto_msgTypes[25]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GCSocialUnfollow) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GCSocialUnfollow) ProtoMessage() {}
-
-func (x *GCSocialUnfollow) ProtoReflect() protoreflect.Message {
-	mi := &file_content_content_proto_msgTypes[25]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GCSocialUnfollow.ProtoReflect.Descriptor instead.
-func (*GCSocialUnfollow) Descriptor() ([]byte, []int) {
-	return file_content_content_proto_rawDescGZIP(), []int{25}
-}
-
-func (x *GCSocialUnfollow) GetErrorCode() int32 {
-	if x != nil {
-		return x.ErrorCode
-	}
-	return 0
-}
-
-func (x *GCSocialUnfollow) GetErrorMsg() string {
-	if x != nil {
-		return x.ErrorMsg
-	}
-	return ""
-}
-
-func (x *GCSocialUnfollow) GetFollowing() bool {
-	if x != nil {
-		return x.Following
-	}
-	return false
-}
-
 var File_content_content_proto protoreflect.FileDescriptor
 
 var file_content_content_proto_rawDesc = []byte{
@@ -1784,29 +1564,10 @@ var file_content_content_proto_rawDesc = []byte{
 	0x12, 0x1d, 0x0a, 0x0a, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x5f, 0x63, 0x6f, 0x64, 0x65, 0x18, 0x01,
 	0x20, 0x01, 0x28, 0x05, 0x52, 0x09, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x43, 0x6f, 0x64, 0x65, 0x12,
 	0x1b, 0x0a, 0x09, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x5f, 0x6d, 0x73, 0x67, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x08, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x4d, 0x73, 0x67, 0x22, 0x29, 0x0a, 0x0e,
-	0x43, 0x47, 0x53, 0x6f, 0x63, 0x69, 0x61, 0x6c, 0x46, 0x6f, 0x6c, 0x6c, 0x6f, 0x77, 0x12, 0x17,
-	0x0a, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x22, 0x6a, 0x0a, 0x0e, 0x47, 0x43, 0x53, 0x6f, 0x63,
-	0x69, 0x61, 0x6c, 0x46, 0x6f, 0x6c, 0x6c, 0x6f, 0x77, 0x12, 0x1d, 0x0a, 0x0a, 0x65, 0x72, 0x72,
-	0x6f, 0x72, 0x5f, 0x63, 0x6f, 0x64, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x09, 0x65,
-	0x72, 0x72, 0x6f, 0x72, 0x43, 0x6f, 0x64, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x65, 0x72, 0x72, 0x6f,
-	0x72, 0x5f, 0x6d, 0x73, 0x67, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x65, 0x72, 0x72,
-	0x6f, 0x72, 0x4d, 0x73, 0x67, 0x12, 0x1c, 0x0a, 0x09, 0x66, 0x6f, 0x6c, 0x6c, 0x6f, 0x77, 0x69,
-	0x6e, 0x67, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x52, 0x09, 0x66, 0x6f, 0x6c, 0x6c, 0x6f, 0x77,
-	0x69, 0x6e, 0x67, 0x22, 0x2b, 0x0a, 0x10, 0x43, 0x47, 0x53, 0x6f, 0x63, 0x69, 0x61, 0x6c, 0x55,
-	0x6e, 0x66, 0x6f, 0x6c, 0x6c, 0x6f, 0x77, 0x12, 0x17, 0x0a, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f,
-	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64,
-	0x22, 0x6c, 0x0a, 0x10, 0x47, 0x43, 0x53, 0x6f, 0x63, 0x69, 0x61, 0x6c, 0x55, 0x6e, 0x66, 0x6f,
-	0x6c, 0x6c, 0x6f, 0x77, 0x12, 0x1d, 0x0a, 0x0a, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x5f, 0x63, 0x6f,
-	0x64, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x09, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x43,
-	0x6f, 0x64, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x5f, 0x6d, 0x73, 0x67,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x4d, 0x73, 0x67,
-	0x12, 0x1c, 0x0a, 0x09, 0x66, 0x6f, 0x6c, 0x6c, 0x6f, 0x77, 0x69, 0x6e, 0x67, 0x18, 0x03, 0x20,
-	0x01, 0x28, 0x08, 0x52, 0x09, 0x66, 0x6f, 0x6c, 0x6c, 0x6f, 0x77, 0x69, 0x6e, 0x67, 0x42, 0x20,
-	0x5a, 0x1e, 0x2e, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66,
-	0x2f, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x3b, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x28, 0x09, 0x52, 0x08, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x4d, 0x73, 0x67, 0x42, 0x20, 0x5a, 0x1e,
+	0x2e, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x63,
+	0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x3b, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1821,7 +1582,7 @@ func file_content_content_proto_rawDescGZIP() []byte {
 	return file_content_content_proto_rawDescData
 }
 
-var file_content_content_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
+var file_content_content_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_content_content_proto_goTypes = []interface{}{
 	(*ContentItem)(nil),            // 0: protobuf.ContentItem
 	(*CommentItem)(nil),            // 1: protobuf.CommentItem
@@ -1845,10 +1606,6 @@ var file_content_content_proto_goTypes = []interface{}{
 	(*GCContentComments)(nil),      // 19: protobuf.GCContentComments
 	(*CGContentCommentDelete)(nil), // 20: protobuf.CGContentCommentDelete
 	(*GCContentCommentDelete)(nil), // 21: protobuf.GCContentCommentDelete
-	(*CGSocialFollow)(nil),         // 22: protobuf.CGSocialFollow
-	(*GCSocialFollow)(nil),         // 23: protobuf.GCSocialFollow
-	(*CGSocialUnfollow)(nil),       // 24: protobuf.CGSocialUnfollow
-	(*GCSocialUnfollow)(nil),       // 25: protobuf.GCSocialUnfollow
 }
 var file_content_content_proto_depIdxs = []int32{
 	0, // 0: protobuf.GCContentCreate.content:type_name -> protobuf.ContentItem
@@ -2134,54 +1891,6 @@ func file_content_content_proto_init() {
 				return nil
 			}
 		}
-		file_content_content_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CGSocialFollow); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_content_content_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GCSocialFollow); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_content_content_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CGSocialUnfollow); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_content_content_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GCSocialUnfollow); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -2189,7 +1898,7 @@ func file_content_content_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_content_content_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   26,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -29,7 +29,5 @@ func New(s *service.Service) *gin.Engine {
 	router.POST("/content/comment", HandleCGContentComment)                        // 创建评论
 	router.POST("/content/comments", HandleCGContentComments)                      // 查询评论列表
 	router.POST("/content/comment/delete", HandleCGContentCommentDelete)           // 删除自己的评论
-	router.POST("/social/follow", HandleCGSocialFollow)                            // 关注用户
-	router.POST("/social/unfollow", HandleCGSocialUnfollow)                        // 取消关注用户
 	return router
 }

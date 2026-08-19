@@ -24,12 +24,20 @@
       "mode": "debug",
       "program": "${workspaceFolder}/apps/content-service/cmd",
       "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Run social service",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/apps/social-service/cmd",
+      "cwd": "${workspaceFolder}"
     }
   ],
   "compounds": [
     {
-      "name": "Run user + message + content services",
-      "configurations": ["Run user service", "Run message service", "Run content service"],
+      "name": "Run all services",
+      "configurations": ["Run user service", "Run message service", "Run content service", "Run social service"],
       "stopAll": true
     }
   ]

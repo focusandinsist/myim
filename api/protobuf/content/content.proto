@@ -125,21 +125,3 @@ message GCContentCommentDelete {
     int32 error_code = 1; // 错误码，0表示成功
     string error_msg = 2; // 错误信息
 }
-
-message CGSocialFollow {
-    string user_id = 1; // 被关注用户ID
-}
-message GCSocialFollow {
-    int32 error_code = 1; // 错误码，0表示成功
-    string error_msg = 2; // 错误信息
-    bool following = 3; // 当前是否已关注
-}
-
-message CGSocialUnfollow {
-    string user_id = 1; // 被取消关注用户ID
-}
-message GCSocialUnfollow {
-    int32 error_code = 1; // 错误码，0表示成功
-    string error_msg = 2; // 错误信息
-    bool following = 3; // 当前是否已关注
-}

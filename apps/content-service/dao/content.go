@@ -231,19 +231,3 @@ func (d *Dao) DeleteComment(ctx context.Context, commentID, authorID string) err
 	`, time.Now(), commentID)
 	return err
 }
-
-func (d *Dao) Follow(ctx context.Context, followerID, followeeID string, active bool) error {
-	status := 2
-	if active {
-		status = 1
-	}
-	_, err := d.db.ExecContext(ctx, `
-		INSERT INTO follows
-			(follower_user_id, followee_user_id, status)
-		VALUES
-			($1, $2, $3)
-		ON CONFLICT (follower_user_id, followee_user_id)
-		DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP
-	`, followerID, followeeID, status)
-	return err
-}
