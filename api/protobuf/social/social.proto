@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package protobuf;
+
+option go_package = "./api/protobuf/social;social";
+
+enum FollowStatus {
+    FOLLOW_STATUS_UNSPECIFIED = 0; // 未指定关注状态
+    FOLLOW_STATUS_ACTIVE = 1; // 有效关注状态
+    FOLLOW_STATUS_CANCELLED = 2; // 已取消关注状态
+}
+
+message FollowRelation {
+    string follower_user_id = 1; // 关注发起用户ID
+    string followee_user_id = 2; // 被关注用户ID
+    FollowStatus status = 3; // 关注关系状态
+    int64 created_at = 4; // 首次关注时间，Unix秒
+    int64 updated_at = 5; // 最后更新时间，Unix秒
+}
+
+message CGSocialFollow {
+    string target_user_id = 1; // 被关注用户ID
+}
+message GCSocialFollow {
+    int32 error_code = 1; // 错误码，0表示成功
+    string error_msg = 2; // 错误信息
+    FollowRelation relation = 3; // 当前关注关系
+}
+
+message CGSocialUnfollow {
+    string target_user_id = 1; // 被取消关注用户ID
+}
+message GCSocialUnfollow {
+    int32 error_code = 1; // 错误码，0表示成功
+    string error_msg = 2; // 错误信息
+    FollowRelation relation = 3; // 当前关注关系
+}
+
+message CGSocialFollowingList {
+    int32 page = 1; // 页码，从1开始
+    int32 page_size = 2; // 每页数量
+}
+message GCSocialFollowingList {
+    int32 error_code = 1; // 错误码，0表示成功
+    string error_msg = 2; // 错误信息
+    repeated FollowRelation relations = 3; // 当前用户的关注关系列表
+}
+
+message CGSocialFollowerList {
+    int32 page = 1; // 页码，从1开始
+    int32 page_size = 2; // 每页数量
+}
+message GCSocialFollowerList {
+    int32 error_code = 1; // 错误码，0表示成功
+    string error_msg = 2; // 错误信息
+    repeated FollowRelation relations = 3; // 当前用户的粉丝关系列表
+}
+
+message CGSocialFollowCheck {
+    string target_user_id = 1; // 待检查的目标用户ID
+}
+message GCSocialFollowCheck {
+    int32 error_code = 1; // 错误码，0表示成功
+    string error_msg = 2; // 错误信息
+    bool following = 3; // 当前用户是否关注目标用户
+}

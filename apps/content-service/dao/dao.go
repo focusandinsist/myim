@@ -68,16 +68,7 @@ func (d *Dao) initSchema(ctx context.Context) error {
 
 		CREATE INDEX IF NOT EXISTS content_comments_content_idx
 		ON content_comments (content_id, created_at DESC);
-
-		CREATE TABLE IF NOT EXISTS follows (
-			follower_user_id VARCHAR(36) NOT NULL,
-			followee_user_id VARCHAR(36) NOT NULL,
-			status SMALLINT NOT NULL DEFAULT 1,
-			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (follower_user_id, followee_user_id),
-			CHECK (follower_user_id <> followee_user_id)
-		);`
+	`
 	if _, err := d.db.ExecContext(ctx, schema); err != nil {
 		return fmt.Errorf("initialize content schema: %w", err)
 	}
