@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"myim/apps/user-service/config"
-	userdb "myim/internal/db/user"
+	userdb "myim/db/user"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )

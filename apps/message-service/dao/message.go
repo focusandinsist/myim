@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"myim/apps/message-service/model"
-	messagedb "myim/internal/db/message"
+	messagedb "myim/db/message"
 )
 
 var ErrMessageNotFound = errors.New("message not found")

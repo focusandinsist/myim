@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"myim/apps/social-service/model"
-	socialdb "myim/internal/db/social"
+	socialdb "myim/db/social"
 )
 
 func (d *Dao) UserExists(ctx context.Context, userID string) (bool, error) {

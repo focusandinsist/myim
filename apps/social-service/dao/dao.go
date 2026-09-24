@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"myim/apps/social-service/config"
-	socialdb "myim/internal/db/social"
+	socialdb "myim/db/social"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )

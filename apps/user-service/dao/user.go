@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"myim/apps/user-service/model"
-	userdb "myim/internal/db/user"
+	userdb "myim/db/user"
 
 	"github.com/jackc/pgx/v5/pgconn"
 )

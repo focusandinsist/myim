@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"myim/apps/message-service/config"
-	messagedb "myim/internal/db/message"
+	messagedb "myim/db/message"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )

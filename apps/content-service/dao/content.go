@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"myim/apps/content-service/model"
-	contentdb "myim/internal/db/content"
+	contentdb "myim/db/content"
 )
 
 var ErrNotFound = errors.New("content not found")

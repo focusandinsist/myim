@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"myim/apps/content-service/config"
-	contentdb "myim/internal/db/content"
+	contentdb "myim/db/content"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
