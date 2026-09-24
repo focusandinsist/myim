@@ -48,11 +48,7 @@ func New(c *config.Config, d *contentdao.Dao) *Service {
 }
 
 func (s *Service) user(token string) (string, error) {
-	parts := strings.Fields(token)
-	if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
-		return "", userservice.ErrInvalidAccessToken
-	}
-	claims, err := userservice.ValidateAccessToken(parts[1], s.config.JWTSecret)
+	claims, err := userservice.ValidateAccessToken(token, s.config.JWTSecret)
 	if err != nil {
 		return "", err
 	}

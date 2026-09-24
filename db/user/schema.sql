@@ -1,0 +1,17 @@
+CREATE TABLE users (
+    user_id VARCHAR(36) PRIMARY KEY,
+    user_name VARCHAR(32) NOT NULL,
+    password VARCHAR(60) NOT NULL,
+    phone VARCHAR(32) NOT NULL DEFAULT '',
+    email VARCHAR(128) NOT NULL DEFAULT '',
+    nickname VARCHAR(64) NOT NULL DEFAULT '',
+    avatar VARCHAR(512) NOT NULL DEFAULT '',
+    bio VARCHAR(256) NOT NULL DEFAULT '',
+    gender SMALLINT NOT NULL DEFAULT 0,
+    birthday BIGINT NOT NULL DEFAULT 0,
+    region VARCHAR(128) NOT NULL DEFAULT '',
+    status SMALLINT NOT NULL DEFAULT 0,
+    register_time BIGINT NOT NULL,
+    last_login_time BIGINT NOT NULL DEFAULT 0,
+    updated_time BIGINT NOT NULL DEFAULT 0
+);
