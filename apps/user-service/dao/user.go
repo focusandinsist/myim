@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"myim/apps/user-service/model"
+	userdb "myim/internal/db/user"
 
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -17,32 +18,7 @@ var (
 )
 
 func (d *Dao) CreateUser(ctx context.Context, user *model.User) error {
-	const query = `
-		INSERT INTO users
-			(user_id, user_name, password, phone, email, nickname, avatar, bio,
-			 gender, birthday, region, status, register_time, last_login_time, updated_time)
-		VALUES
-			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-	`
-	_, err := d.db.ExecContext(
-		ctx,
-		query,
-		user.UserID,
-		user.UserName,
-		user.Password,
-		user.Phone,
-		user.Email,
-		user.Nickname,
-		user.Avatar,
-		user.Bio,
-		user.Gender,
-		user.Birthday,
-		user.Region,
-		user.Status,
-		user.RegisterTime,
-		user.LastLoginTime,
-		user.UpdatedTime,
-	)
+	err := d.queries.CreateUser(ctx, userdb.CreateUserParams{UserID: user.UserID, UserName: user.UserName, Password: user.Password, Phone: user.Phone, Email: user.Email, Nickname: user.Nickname, Avatar: user.Avatar, Bio: user.Bio, Gender: int16(user.Gender), Birthday: user.Birthday, Region: user.Region, Status: int16(user.Status), RegisterTime: user.RegisterTime, LastLoginTime: user.LastLoginTime, UpdatedTime: user.UpdatedTime})
 	if err == nil {
 		return nil
 	}
@@ -54,55 +30,27 @@ func (d *Dao) CreateUser(ctx context.Context, user *model.User) error {
 }
 
 func (d *Dao) GetUserByUserID(ctx context.Context, userID string) (*model.User, error) {
-	const query = `
-		SELECT
-			user_id, user_name, password, phone, email, nickname, avatar, bio,
-			gender, birthday, region, status, register_time, last_login_time, updated_time
-		FROM users
-		WHERE user_id = $1
-	`
-	return d.scanUser(d.db.QueryRowContext(ctx, query, userID))
+	row, err := d.queries.GetUserByUserID(ctx, userID)
+	return d.convertUser(row, err)
 }
 
 func (d *Dao) GetUserByUserName(ctx context.Context, userName string) (*model.User, error) {
-	const query = `
-		SELECT
-			user_id, user_name, password, phone, email, nickname, avatar, bio,
-			gender, birthday, region, status, register_time, last_login_time, updated_time
-		FROM users
-		WHERE LOWER(user_name) = LOWER($1)
-	`
-	return d.scanUser(d.db.QueryRowContext(ctx, query, userName))
+	row, err := d.queries.GetUserByUserName(ctx, userName)
+	return d.convertUser(row, err)
 }
 
 func (d *Dao) UserNameExists(ctx context.Context, userName string) (bool, error) {
-	const query = `
-		SELECT EXISTS(
-			SELECT 1
-			FROM users
-			WHERE LOWER(user_name) = LOWER($1)
-		)
-	`
-	var exists bool
-	if err := d.db.QueryRowContext(ctx, query, userName).Scan(&exists); err != nil {
+	exists, err := d.queries.UserNameExists(ctx, userName)
+	if err != nil {
 		return false, fmt.Errorf("check user name exists: %w", err)
 	}
 	return exists, nil
 }
 
 func (d *Dao) UpdateLastLoginTime(ctx context.Context, userID string, loginTime int64) error {
-	const query = `
-		UPDATE users
-		SET last_login_time = $1
-		WHERE user_id = $2
-	`
-	result, err := d.db.ExecContext(ctx, query, loginTime, userID)
+	rows, err := d.queries.UpdateLastLoginTime(ctx, userdb.UpdateLastLoginTimeParams{LastLoginTime: loginTime, UserID: userID})
 	if err != nil {
 		return fmt.Errorf("update last login time: %w", err)
-	}
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("read updated rows: %w", err)
 	}
 	if rows == 0 {
 		return ErrUserNotFound
@@ -110,33 +58,16 @@ func (d *Dao) UpdateLastLoginTime(ctx context.Context, userID string, loginTime 
 	return nil
 }
 
-type rowScanner interface {
-	Scan(dest ...any) error
-}
-
-func (d *Dao) scanUser(row rowScanner) (*model.User, error) {
+func (d *Dao) convertUser(row userdb.User, err error) (*model.User, error) {
 	user := new(model.User)
-	if err := row.Scan(
-		&user.UserID,
-		&user.UserName,
-		&user.Password,
-		&user.Phone,
-		&user.Email,
-		&user.Nickname,
-		&user.Avatar,
-		&user.Bio,
-		&user.Gender,
-		&user.Birthday,
-		&user.Region,
-		&user.Status,
-		&user.RegisterTime,
-		&user.LastLoginTime,
-		&user.UpdatedTime,
-	); err != nil {
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrUserNotFound
 		}
 		return nil, fmt.Errorf("scan user: %w", err)
 	}
+	user.UserID, user.UserName, user.Password, user.Phone, user.Email = row.UserID, row.UserName, row.Password, row.Phone, row.Email
+	user.Nickname, user.Avatar, user.Bio, user.Gender, user.Birthday = row.Nickname, row.Avatar, row.Bio, int32(row.Gender), row.Birthday
+	user.Region, user.Status, user.RegisterTime, user.LastLoginTime, user.UpdatedTime = row.Region, int32(row.Status), row.RegisterTime, row.LastLoginTime, row.UpdatedTime
 	return user, nil
 }

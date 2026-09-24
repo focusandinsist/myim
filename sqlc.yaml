@@ -1,0 +1,38 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    schema: "db/user/schema.sql"
+    queries: "db/user/query.sql"
+    gen:
+      go:
+        package: "userdb"
+        out: "internal/db/user"
+        sql_package: "database/sql"
+        emit_json_tags: true
+  - engine: "postgresql"
+    schema: "db/message/schema.sql"
+    queries: "db/message/query.sql"
+    gen:
+      go:
+        package: "messagedb"
+        out: "internal/db/message"
+        sql_package: "database/sql"
+        emit_json_tags: true
+  - engine: "postgresql"
+    schema: "db/social/schema.sql"
+    queries: "db/social/query.sql"
+    gen:
+      go:
+        package: "socialdb"
+        out: "internal/db/social"
+        sql_package: "database/sql"
+        emit_json_tags: true
+  - engine: "postgresql"
+    schema: "db/content/schema.sql"
+    queries: "db/content/query.sql"
+    gen:
+      go:
+        package: "contentdb"
+        out: "internal/db/content"
+        sql_package: "database/sql"
+        emit_json_tags: true
