@@ -2,11 +2,10 @@ package router
 
 import (
 	"net/http"
-	"strings"
 	"time"
 
 	proto_message "myim/api/protobuf/message"
-	"myim/apps/message-service/service"
+	"myim/internal/auth"
 	"myim/internal/httpx"
 
 	"github.com/gin-gonic/gin"
@@ -15,14 +14,14 @@ import (
 
 func HandleCGConnection(c *gin.Context) {
 	output := new(proto_message.GCWSMessage)
-	authorization := strings.Fields(c.GetHeader("Authorization"))
-	if len(authorization) != 2 || !strings.EqualFold(authorization[0], "Bearer") {
+	accessToken, tokenErr := auth.RequireBearerToken(c.GetHeader("Authorization"))
+	if tokenErr != nil {
 		output.ErrorCode = http.StatusUnauthorized
-		output.ErrorMsg = service.ErrInvalidAccessToken.Error()
-		httpx.Response(c, output, service.ErrInvalidAccessToken)
+		output.ErrorMsg = auth.ErrInvalidAccessToken.Error()
+		httpx.Response(c, output, auth.ErrInvalidAccessToken)
 		return
 	}
-	claims, err := service.ValidateAccessToken(authorization[1], messageConfig.JWTSecret)
+	claims, err := auth.Validate(accessToken, messageConfig.Auth.Secret)
 	if err != nil {
 		output.ErrorCode = http.StatusUnauthorized
 		output.ErrorMsg = err.Error()

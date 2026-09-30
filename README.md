@@ -45,9 +45,9 @@ skills                    本项目强制协作规则（含 face/facer 用语约
 go.mod、go.sum            Go module 和依赖锁定
 ```
 
-服务默认端口为 user `:8080`、message `:8081`、content `:8082`、social `:8083`。四个服务仍位于同一个 Go module 中，可独立启动但共享 PostgreSQL、JWT 签名密钥和代码仓库；这属于当前的单体基础架构，不代表已经完成生产级微服务治理。
+服务默认端口为 user `:8080`、message `:8081`、content `:8082`、social `:8083`。四个服务仍位于同一个 Go module 中，可独立启动但共享 PostgreSQL、统一 JWT 配置和代码仓库；这属于当前的单体基础架构，不代表已经完成生产级微服务治理。
 
-每个 `apps/<service>/app.App` 都是对应服务的 composition root。四个进程拥有独立端口和生命周期，但当前共享代码仓库及 JWT 签名密钥。
+每个 `apps/<service>/app.App` 都是对应服务的 composition root。四个进程拥有独立端口和生命周期；鉴权实现集中在 `internal/auth`，运行时通过 `MYIM_JWT_SECRET` 和 `MYIM_DATABASE_DSN` 读取共享配置。应用启动会拒绝开发 JWT 密钥，详细边界见 [鉴权与配置进度记录](docs/progress-2026-09-30-auth-config.md)。
 
 `App.Run` 启动服务并阻塞等待退出，`App.Stop` 负责只执行一次 HTTP 优雅关闭和 DAO 关闭。VS Code 可以直接选择 `.vscode/launch.json` 中的 `Run user service` 配置启动调试；运行前需要保证固定配置所指向的 PostgreSQL 可连接。
 

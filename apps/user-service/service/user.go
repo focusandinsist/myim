@@ -2,10 +2,6 @@ package service
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -17,6 +13,7 @@ import (
 	proto_user "myim/api/protobuf/user"
 	"myim/apps/user-service/dao"
 	"myim/apps/user-service/model"
+	"myim/internal/auth"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -26,20 +23,12 @@ var (
 	ErrInvalidInput       = errors.New("invalid input")                 // 请求字段缺失或格式不符合业务要求
 	ErrUserNameExists     = errors.New("user name already exists")      // 注册用户名已被占用
 	ErrInvalidCredentials = errors.New("invalid user name or password") // 登录用户名不存在或密码错误
-	ErrInvalidAccessToken = errors.New("invalid access token")          // 访问令牌缺失、格式错误、签名无效或所属用户不存在
-	ErrExpiredAccessToken = errors.New("expired access token")          // 访问令牌已超过有效期
+	ErrInvalidAccessToken = auth.ErrInvalidAccessToken                  // 访问令牌缺失、格式错误、签名无效或所属用户不存在
+	ErrExpiredAccessToken = auth.ErrExpiredAccessToken                  // 访问令牌已超过有效期
 	ErrUserNotFound       = errors.New("user not found")                // 目标用户不存在
 )
 
-const defaultTokenExpiry = 24 * time.Hour
-
-// AccessTokenClaims 表示 myim 访问令牌中保存的身份和有效期信息。
-type AccessTokenClaims struct {
-	UserID    string `json:"user_id"`   // 用户ID
-	UserName  string `json:"user_name"` // 登录用户名
-	IssuedAt  int64  `json:"iat"`       // 签发时间，Unix秒
-	ExpiresAt int64  `json:"exp"`       // 过期时间，Unix秒
-}
+type AccessTokenClaims = auth.Claims
 
 func (s *Service) HandleCGUserRegister(ctx context.Context, input *proto_user.CGUserRegister) (output *proto_user.GCUserRegister, err error) {
 	output = new(proto_user.GCUserRegister)
@@ -175,15 +164,15 @@ func (s *Service) HandleCGUserLogin(ctx context.Context, input *proto_user.CGUse
 		return output, ErrInvalidCredentials
 	}
 
-	tokenExpiry := s.config.TokenExpires
+	tokenExpiry := s.config.Auth.TokenExpires
 	if tokenExpiry <= 0 {
-		tokenExpiry = defaultTokenExpiry
+		tokenExpiry = 24 * time.Hour
 	}
 	now := time.Now()
 	expiresAt := now.Add(tokenExpiry).Unix()
 	token, err := generateAccessToken(AccessTokenClaims{
 		UserID: user.UserID, UserName: user.UserName, IssuedAt: now.Unix(), ExpiresAt: expiresAt,
-	}, s.config.JWTSecret)
+	}, s.config.Auth.Secret)
 	if err != nil {
 		err = fmt.Errorf("generate access token: %w", err)
 		output.ErrorCode = http.StatusInternalServerError
@@ -206,7 +195,7 @@ func (s *Service) HandleCGUserLogin(ctx context.Context, input *proto_user.CGUse
 
 func (s *Service) HandleCGMyProfile(ctx context.Context, accessToken string) (output *proto_user.GCMyProfile, err error) {
 	output = new(proto_user.GCMyProfile)
-	claims, err := ValidateAccessToken(accessToken, s.config.JWTSecret)
+	claims, err := auth.Validate(accessToken, s.config.Auth.Secret)
 	if err != nil {
 		output.ErrorCode = http.StatusUnauthorized
 		output.ErrorMsg = err.Error()
@@ -246,7 +235,7 @@ func (s *Service) HandleCGMyProfile(ctx context.Context, accessToken string) (ou
 
 func (s *Service) HandleCGTargetProfile(ctx context.Context, input *proto_user.CGTargetProfile, accessToken string) (output *proto_user.GCTargetProfile, err error) {
 	output = new(proto_user.GCTargetProfile)
-	if _, err = ValidateAccessToken(accessToken, s.config.JWTSecret); err != nil {
+	if _, err = auth.Validate(accessToken, s.config.Auth.Secret); err != nil {
 		output.ErrorCode = http.StatusUnauthorized
 		output.ErrorMsg = err.Error()
 		return output, err
@@ -283,45 +272,5 @@ func (s *Service) HandleCGTargetProfile(ctx context.Context, input *proto_user.C
 }
 
 func generateAccessToken(claims AccessTokenClaims, secret string) (string, error) {
-	if secret == "" {
-		return "", errors.New("empty JWT secret")
-	}
-	header, _ := json.Marshal(map[string]string{"alg": "HS256", "typ": "JWT"})
-	payload, err := json.Marshal(claims)
-	if err != nil {
-		return "", err
-	}
-	unsigned := base64.RawURLEncoding.EncodeToString(header) + "." + base64.RawURLEncoding.EncodeToString(payload)
-	signature := signToken(unsigned, secret)
-	return unsigned + "." + base64.RawURLEncoding.EncodeToString(signature), nil
-}
-
-func ValidateAccessToken(token, secret string) (*AccessTokenClaims, error) {
-	parts := strings.Split(token, ".")
-	if len(parts) != 3 || secret == "" {
-		return nil, ErrInvalidAccessToken
-	}
-	expected := signToken(parts[0]+"."+parts[1], secret)
-	actual, err := base64.RawURLEncoding.DecodeString(parts[2])
-	if err != nil || !hmac.Equal(actual, expected) {
-		return nil, ErrInvalidAccessToken
-	}
-	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
-	if err != nil {
-		return nil, ErrInvalidAccessToken
-	}
-	claims := new(AccessTokenClaims)
-	if err := json.Unmarshal(payload, claims); err != nil || claims.UserID == "" || claims.ExpiresAt <= 0 {
-		return nil, ErrInvalidAccessToken
-	}
-	if claims.ExpiresAt <= time.Now().Unix() {
-		return nil, ErrExpiredAccessToken
-	}
-	return claims, nil
-}
-
-func signToken(unsigned, secret string) []byte {
-	mac := hmac.New(sha256.New, []byte(secret))
-	mac.Write([]byte(unsigned))
-	return mac.Sum(nil)
+	return auth.Issue(claims, secret)
 }

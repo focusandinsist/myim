@@ -2,9 +2,9 @@ package router
 
 import (
 	"net/http"
-	"strings"
 
 	proto_social "myim/api/protobuf/social"
+	"myim/internal/auth"
 	"myim/internal/httpx"
 
 	"github.com/gin-gonic/gin"
@@ -19,7 +19,7 @@ func HandleCGSocialFollow(c *gin.Context) {
 		httpx.Response(c, output, httpx.ErrInvalidRequest)
 		return
 	}
-	output, err := serv.HandleCGSocialFollow(c.Request.Context(), input, accessToken(c))
+	output, err := serv.HandleCGSocialFollow(c.Request.Context(), input, auth.BearerToken(c.GetHeader("Authorization")))
 	httpx.Response(c, output, err)
 }
 
@@ -32,7 +32,7 @@ func HandleCGSocialUnfollow(c *gin.Context) {
 		httpx.Response(c, output, httpx.ErrInvalidRequest)
 		return
 	}
-	output, err := serv.HandleCGSocialUnfollow(c.Request.Context(), input, accessToken(c))
+	output, err := serv.HandleCGSocialUnfollow(c.Request.Context(), input, auth.BearerToken(c.GetHeader("Authorization")))
 	httpx.Response(c, output, err)
 }
 
@@ -45,7 +45,7 @@ func HandleCGSocialFollowingList(c *gin.Context) {
 		httpx.Response(c, output, httpx.ErrInvalidRequest)
 		return
 	}
-	output, err := serv.HandleCGSocialFollowingList(c.Request.Context(), input, accessToken(c))
+	output, err := serv.HandleCGSocialFollowingList(c.Request.Context(), input, auth.BearerToken(c.GetHeader("Authorization")))
 	httpx.Response(c, output, err)
 }
 
@@ -58,7 +58,7 @@ func HandleCGSocialFollowerList(c *gin.Context) {
 		httpx.Response(c, output, httpx.ErrInvalidRequest)
 		return
 	}
-	output, err := serv.HandleCGSocialFollowerList(c.Request.Context(), input, accessToken(c))
+	output, err := serv.HandleCGSocialFollowerList(c.Request.Context(), input, auth.BearerToken(c.GetHeader("Authorization")))
 	httpx.Response(c, output, err)
 }
 
@@ -71,14 +71,6 @@ func HandleCGSocialFollowCheck(c *gin.Context) {
 		httpx.Response(c, output, httpx.ErrInvalidRequest)
 		return
 	}
-	output, err := serv.HandleCGSocialFollowCheck(c.Request.Context(), input, accessToken(c))
+	output, err := serv.HandleCGSocialFollowCheck(c.Request.Context(), input, auth.BearerToken(c.GetHeader("Authorization")))
 	httpx.Response(c, output, err)
-}
-
-func accessToken(c *gin.Context) string {
-	authorization := strings.Fields(c.GetHeader("Authorization"))
-	if len(authorization) == 2 && strings.EqualFold(authorization[0], "Bearer") {
-		return authorization[1]
-	}
-	return ""
 }

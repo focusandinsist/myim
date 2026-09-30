@@ -8,7 +8,7 @@ import (
 
 	proto_social "myim/api/protobuf/social"
 	"myim/apps/social-service/model"
-	user_service "myim/apps/user-service/service"
+	"myim/internal/auth"
 
 	"github.com/google/uuid"
 )
@@ -26,7 +26,7 @@ const (
 
 func (s *Service) HandleCGSocialFollow(ctx context.Context, input *proto_social.CGSocialFollow, accessToken string) (output *proto_social.GCSocialFollow, err error) {
 	output = new(proto_social.GCSocialFollow)
-	claims, err := user_service.ValidateAccessToken(accessToken, s.config.JWTSecret)
+	claims, err := auth.Validate(accessToken, s.config.Auth.Secret)
 	if err != nil {
 		output.ErrorCode = http.StatusUnauthorized
 		output.ErrorMsg = err.Error()
@@ -72,7 +72,7 @@ func (s *Service) HandleCGSocialFollow(ctx context.Context, input *proto_social.
 
 func (s *Service) HandleCGSocialUnfollow(ctx context.Context, input *proto_social.CGSocialUnfollow, accessToken string) (output *proto_social.GCSocialUnfollow, err error) {
 	output = new(proto_social.GCSocialUnfollow)
-	claims, err := user_service.ValidateAccessToken(accessToken, s.config.JWTSecret)
+	claims, err := auth.Validate(accessToken, s.config.Auth.Secret)
 	if err != nil {
 		output.ErrorCode = http.StatusUnauthorized
 		output.ErrorMsg = err.Error()
@@ -117,7 +117,7 @@ func (s *Service) HandleCGSocialUnfollow(ctx context.Context, input *proto_socia
 
 func (s *Service) HandleCGSocialFollowingList(ctx context.Context, input *proto_social.CGSocialFollowingList, accessToken string) (output *proto_social.GCSocialFollowingList, err error) {
 	output = new(proto_social.GCSocialFollowingList)
-	claims, err := user_service.ValidateAccessToken(accessToken, s.config.JWTSecret)
+	claims, err := auth.Validate(accessToken, s.config.Auth.Secret)
 	if err != nil {
 		output.ErrorCode = http.StatusUnauthorized
 		output.ErrorMsg = err.Error()
@@ -140,7 +140,7 @@ func (s *Service) HandleCGSocialFollowingList(ctx context.Context, input *proto_
 
 func (s *Service) HandleCGSocialFollowerList(ctx context.Context, input *proto_social.CGSocialFollowerList, accessToken string) (output *proto_social.GCSocialFollowerList, err error) {
 	output = new(proto_social.GCSocialFollowerList)
-	claims, err := user_service.ValidateAccessToken(accessToken, s.config.JWTSecret)
+	claims, err := auth.Validate(accessToken, s.config.Auth.Secret)
 	if err != nil {
 		output.ErrorCode = http.StatusUnauthorized
 		output.ErrorMsg = err.Error()
@@ -163,7 +163,7 @@ func (s *Service) HandleCGSocialFollowerList(ctx context.Context, input *proto_s
 
 func (s *Service) HandleCGSocialFollowCheck(ctx context.Context, input *proto_social.CGSocialFollowCheck, accessToken string) (output *proto_social.GCSocialFollowCheck, err error) {
 	output = new(proto_social.GCSocialFollowCheck)
-	claims, err := user_service.ValidateAccessToken(accessToken, s.config.JWTSecret)
+	claims, err := auth.Validate(accessToken, s.config.Auth.Secret)
 	if err != nil {
 		output.ErrorCode = http.StatusUnauthorized
 		output.ErrorMsg = err.Error()

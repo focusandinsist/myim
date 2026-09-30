@@ -14,7 +14,7 @@ import (
 	contentdao "myim/apps/content-service/dao"
 	"myim/apps/content-service/event"
 	"myim/apps/content-service/model"
-	userservice "myim/apps/user-service/service"
+	"myim/internal/auth"
 )
 
 var (
@@ -48,7 +48,7 @@ func New(c *config.Config, d *contentdao.Dao) *Service {
 }
 
 func (s *Service) user(token string) (string, error) {
-	claims, err := userservice.ValidateAccessToken(token, s.config.JWTSecret)
+	claims, err := auth.Validate(token, s.config.Auth.Secret)
 	if err != nil {
 		return "", err
 	}

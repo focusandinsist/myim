@@ -28,6 +28,9 @@ type App struct {
 
 func New() (*App, error) {
 	conf := config.New()
+	if err := conf.Auth.Validate(); err != nil {
+		return nil, fmt.Errorf("validate auth config: %w", err)
+	}
 	dao, err := dao.New(conf)
 	if err != nil {
 		return nil, err

@@ -2,9 +2,9 @@ package router
 
 import (
 	"net/http"
-	"strings"
 
 	proto_user "myim/api/protobuf/user"
+	"myim/internal/auth"
 	"myim/internal/httpx"
 
 	"github.com/gin-gonic/gin"
@@ -38,10 +38,7 @@ func HandleCGUserLogin(c *gin.Context) {
 
 func HandleCGMyProfile(c *gin.Context) {
 	accessToken := ""
-	authorization := strings.Fields(c.GetHeader("Authorization"))
-	if len(authorization) == 2 && strings.EqualFold(authorization[0], "Bearer") {
-		accessToken = authorization[1]
-	}
+	accessToken = auth.BearerToken(c.GetHeader("Authorization"))
 	output, err := serv.HandleCGMyProfile(c.Request.Context(), accessToken)
 	httpx.Response(c, output, err)
 }
@@ -56,10 +53,7 @@ func HandleCGTargetProfile(c *gin.Context) {
 		return
 	}
 	accessToken := ""
-	authorization := strings.Fields(c.GetHeader("Authorization"))
-	if len(authorization) == 2 && strings.EqualFold(authorization[0], "Bearer") {
-		accessToken = authorization[1]
-	}
+	accessToken = auth.BearerToken(c.GetHeader("Authorization"))
 	output, err := serv.HandleCGTargetProfile(c.Request.Context(), input, accessToken)
 	httpx.Response(c, output, err)
 }

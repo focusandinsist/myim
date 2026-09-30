@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -23,6 +24,9 @@ type App struct {
 
 func New() (*App, error) {
 	c := config.New()
+	if err := c.Auth.Validate(); err != nil {
+		return nil, fmt.Errorf("validate auth config: %w", err)
+	}
 	d, e := dao.New(c)
 	if e != nil {
 		return nil, e
