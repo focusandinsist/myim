@@ -30,7 +30,9 @@ sql:
         sql_package: "database/sql"
         emit_json_tags: true
   - engine: "postgresql"
-    schema: "internal/migration/sql/000004_content.up.sql"
+    schema:
+      - "internal/migration/sql/000004_content.up.sql"
+      - "internal/migration/sql/000005_content_outbox.up.sql"
     queries: "db/content/query.sql"
     gen:
       go:

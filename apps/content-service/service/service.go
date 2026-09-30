@@ -36,16 +36,27 @@ func (s *Service) Stop() {
 }
 
 func New(c *config.Config, d *contentdao.Dao) *Service {
-	publisher := event.Publisher(event.LogPublisher{})
-	if kafkaPublisher, err := event.NewSaramaPublisher(c.KafkaBrokers); err == nil {
-		publisher = kafkaPublisher
-	}
-	return NewWithPublisher(c, d, publisher)
+	return NewWithPublisher(c, d, nil)
 }
 
 func NewWithPublisher(c *config.Config, d *contentdao.Dao, publisher event.Publisher) *Service {
-	if publisher == nil {
-		publisher = event.LogPublisher{}
+	if c.KafkaTopic == "" {
+		c.KafkaTopic = event.TopicContentEvents
+	}
+	if c.OutboxPollInterval <= 0 {
+		c.OutboxPollInterval = time.Second
+	}
+	if c.OutboxLease <= 0 {
+		c.OutboxLease = 2 * time.Minute
+	}
+	if c.OutboxRetryBase <= 0 {
+		c.OutboxRetryBase = time.Second
+	}
+	if c.OutboxBatchSize <= 0 {
+		c.OutboxBatchSize = 32
+	}
+	if c.OutboxRetention <= 0 {
+		c.OutboxRetention = 7 * 24 * time.Hour
 	}
 	return &Service{
 		config:    c,
@@ -212,25 +223,18 @@ func (s *Service) like(ctx context.Context, id, token string, active bool) (int6
 	if err != nil {
 		return 0, err
 	}
-	if _, err = s.dao.GetContent(ctx, id); err != nil {
-		return 0, err
-	}
-	return s.dao.ToggleLike(ctx, id, userID, active)
+	return s.dao.ToggleLike(ctx, id, userID, s.config.KafkaTopic, active)
 }
 
 func (s *Service) HandleCGContentLike(ctx context.Context, in *proto.CGContentLike, accessToken string) (output *proto.GCContentLike, err error) {
 	output = new(proto.GCContentLike)
 	likeCount, err := s.like(ctx, in.GetContentId(), accessToken, true)
 	if err != nil {
-		output.ErrorCode = http.StatusUnauthorized
+		output.ErrorCode = likeErrorCode(err)
 		return output, err
 	}
 	output.LikeCount = likeCount
 	output.Liked = true
-	userID, _ := s.user(accessToken)
-	if payload, eventErr := event.LikeEnvelope("content.liked.v1", in.GetContentId(), userID, true); eventErr == nil {
-		_ = s.publisher.Publish(event.TopicContentEvents, in.GetContentId(), payload)
-	}
 	output.ErrorMsg = "ok"
 	return output, nil
 }
@@ -239,16 +243,22 @@ func (s *Service) HandleCGContentUnlike(ctx context.Context, in *proto.CGContent
 	output = new(proto.GCContentUnlike)
 	likeCount, err := s.like(ctx, in.GetContentId(), accessToken, false)
 	if err != nil {
-		output.ErrorCode = http.StatusUnauthorized
+		output.ErrorCode = likeErrorCode(err)
 		return output, err
 	}
 	output.LikeCount = likeCount
-	userID, _ := s.user(accessToken)
-	if payload, eventErr := event.LikeEnvelope("content.unliked.v1", in.GetContentId(), userID, false); eventErr == nil {
-		_ = s.publisher.Publish(event.TopicContentEvents, in.GetContentId(), payload)
-	}
 	output.ErrorMsg = "ok"
 	return output, nil
+}
+
+func likeErrorCode(err error) int32 {
+	if errors.Is(err, auth.ErrInvalidAccessToken) || errors.Is(err, auth.ErrExpiredAccessToken) {
+		return http.StatusUnauthorized
+	}
+	if errors.Is(err, contentdao.ErrNotFound) {
+		return http.StatusNotFound
+	}
+	return http.StatusInternalServerError
 }
 
 func (s *Service) HandleCGContentComment(ctx context.Context, in *proto.CGContentComment, accessToken string) (output *proto.GCContentComment, err error) {

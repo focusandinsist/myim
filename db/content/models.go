@@ -38,3 +38,20 @@ type ContentLike struct {
 	UserID    string    `json:"user_id"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+type ContentOutbox struct {
+	OutboxID      int64          `json:"outbox_id"`
+	EventID       string         `json:"event_id"`
+	EventType     string         `json:"event_type"`
+	AggregateID   string         `json:"aggregate_id"`
+	Topic         string         `json:"topic"`
+	PartitionKey  string         `json:"partition_key"`
+	Payload       []byte         `json:"payload"`
+	Attempts      int32          `json:"attempts"`
+	NextAttemptAt time.Time      `json:"next_attempt_at"`
+	ClaimedUntil  sql.NullTime   `json:"claimed_until"`
+	ClaimToken    sql.NullString `json:"claim_token"`
+	CreatedAt     time.Time      `json:"created_at"`
+	PublishedAt   sql.NullTime   `json:"published_at"`
+	LastError     string         `json:"last_error"`
+}

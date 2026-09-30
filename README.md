@@ -49,13 +49,13 @@ go.mod、go.sum            Go module 和依赖锁定
 
 每个 `apps/<service>/app.App` 都是对应服务的 composition root。四个进程拥有独立端口和生命周期；鉴权实现集中在 `internal/auth`，运行时通过 `MYIM_JWT_SECRET` 和 `MYIM_DATABASE_DSN` 读取共享配置。应用启动会拒绝开发 JWT 密钥，详细边界见 [鉴权与配置进度记录](docs/progress-2026-09-30-auth-config.md)。
 
-`App.Run` 启动服务并阻塞等待退出，`App.Stop` 负责只执行一次 HTTP 优雅关闭和 DAO 关闭。VS Code 可以直接选择 `.vscode/launch.json` 中的 `Run user service` 配置启动调试；运行前需要保证固定配置所指向的 PostgreSQL 可连接。
+`App.Run` 启动服务并阻塞等待退出，`App.Stop` 负责只执行一次 HTTP 优雅关闭和 DAO 关闭。Content 进程还运行 outbox 投递 worker，停机时等待它退出再关闭 Publisher 和 DAO。VS Code 可以直接选择 `.vscode/launch.json` 中的 `Run user service` 配置启动调试；运行前需要保证固定配置所指向的 PostgreSQL 可连接。
 
 当前四个服务已按 `apps/<service>` 形成可独立启动的服务模块。未来继续微服务化时，应在各自服务目录内增加独立基础设施，不再恢复根 `app` 目录。
 
 Content 业务与 Kafka 学习需求记录在 `docs/content-kafka-learning-requirements.md`。Kafka 第一阶段只服务 Content、Follow、Notification 等异步事件，不改动 user 和 message 核心链路。
 
-当前已新增独立 `content-service`，默认监听 `:8082`。阶段 A 提供动态草稿/发布、详情、作者公开列表、删除、点赞/取消点赞和评论/评论列表；点赞链路已生成 `content.liked.v1`/`content.unliked.v1` 事件 envelope。
+当前已新增独立 `content-service`，默认监听 `:8082`。阶段 A 提供动态草稿/发布、详情、作者公开列表、删除、点赞/取消点赞和评论/评论列表；点赞关系、计数及 `content.liked.v1`/`content.unliked.v1` 事件现写入同一 PostgreSQL 事务中的 outbox，后台按内容顺序重试投递 Kafka。Kafka 暂时不可用不会丢失已提交事件；消费方需按 `event_id` 去重。
 
 当前已新增独立 `social-service`，默认监听 `:8083`，提供关注、取消关注、关注列表、粉丝列表和关注关系判断。Social 目前只使用 HTTP 短连接和 PostgreSQL，不引入 WebSocket、Redis、Kafka 或 gRPC；关注关系已从 content service 移至 social service。
 
@@ -113,6 +113,8 @@ go run ./client/user-53c8
 P0-1 migration 已于 2026-09-29 21:06 +08:00 完成，验证结果见 [本次进度记录](docs/progress-2026-09-29-database-migrations.md)。
 
 P1-4 消息历史与离线补拉已于 2026-09-30 11:08 +08:00 完成，接口、权限和验证结果见 [消息历史进度记录](docs/progress-2026-09-30-message-history.md)。
+
+P1-5 Content 点赞事件 Transactional Outbox 已于 2026-09-30 11:20 +08:00 完成，重试、租约和保留策略见 [Outbox 进度记录](docs/progress-2026-09-30-content-outbox.md)。
 
 ### 新 Agent 开始工作前
 

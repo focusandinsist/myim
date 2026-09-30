@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-const addLike = `-- name: AddLike :exec
+const addLike = `-- name: AddLike :execrows
 INSERT INTO content_likes (content_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING
 `
 
@@ -21,9 +21,87 @@ type AddLikeParams struct {
 	UserID    string `json:"user_id"`
 }
 
-func (q *Queries) AddLike(ctx context.Context, arg AddLikeParams) error {
-	_, err := q.db.ExecContext(ctx, addLike, arg.ContentID, arg.UserID)
-	return err
+func (q *Queries) AddLike(ctx context.Context, arg AddLikeParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, addLike, arg.ContentID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const claimContentOutbox = `-- name: ClaimContentOutbox :many
+WITH candidates AS (
+    SELECT pending.outbox_id
+    FROM content_outbox AS pending
+    WHERE pending.published_at IS NULL
+        AND pending.next_attempt_at <= CURRENT_TIMESTAMP
+        AND (pending.claimed_until IS NULL OR pending.claimed_until <= CURRENT_TIMESTAMP)
+        AND NOT EXISTS (
+            SELECT 1
+            FROM content_outbox AS earlier
+            WHERE earlier.aggregate_id = pending.aggregate_id
+                AND earlier.outbox_id < pending.outbox_id
+                AND earlier.published_at IS NULL
+        )
+    ORDER BY pending.outbox_id
+    LIMIT $1
+    FOR UPDATE SKIP LOCKED
+)
+UPDATE content_outbox AS claimed
+SET claim_token = $2, claimed_until = $3, attempts = claimed.attempts + 1
+FROM candidates
+WHERE claimed.outbox_id = candidates.outbox_id
+RETURNING claimed.outbox_id, claimed.event_id, claimed.event_type, claimed.aggregate_id,
+    claimed.topic, claimed.partition_key, claimed.payload, claimed.attempts
+`
+
+type ClaimContentOutboxParams struct {
+	Limit        int32          `json:"limit"`
+	ClaimToken   sql.NullString `json:"claim_token"`
+	ClaimedUntil sql.NullTime   `json:"claimed_until"`
+}
+
+type ClaimContentOutboxRow struct {
+	OutboxID     int64  `json:"outbox_id"`
+	EventID      string `json:"event_id"`
+	EventType    string `json:"event_type"`
+	AggregateID  string `json:"aggregate_id"`
+	Topic        string `json:"topic"`
+	PartitionKey string `json:"partition_key"`
+	Payload      []byte `json:"payload"`
+	Attempts     int32  `json:"attempts"`
+}
+
+func (q *Queries) ClaimContentOutbox(ctx context.Context, arg ClaimContentOutboxParams) ([]ClaimContentOutboxRow, error) {
+	rows, err := q.db.QueryContext(ctx, claimContentOutbox, arg.Limit, arg.ClaimToken, arg.ClaimedUntil)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ClaimContentOutboxRow
+	for rows.Next() {
+		var i ClaimContentOutboxRow
+		if err := rows.Scan(
+			&i.OutboxID,
+			&i.EventID,
+			&i.EventType,
+			&i.AggregateID,
+			&i.Topic,
+			&i.PartitionKey,
+			&i.Payload,
+			&i.Attempts,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const countLikes = `-- name: CountLikes :one
@@ -140,6 +218,18 @@ func (q *Queries) DeleteContent(ctx context.Context, arg DeleteContentParams) (i
 	return result.RowsAffected()
 }
 
+const deletePublishedContentOutbox = `-- name: DeletePublishedContentOutbox :execrows
+DELETE FROM content_outbox WHERE published_at < $1
+`
+
+func (q *Queries) DeletePublishedContentOutbox(ctx context.Context, publishedAt sql.NullTime) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deletePublishedContentOutbox, publishedAt)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const getContent = `-- name: GetContent :one
 SELECT content_id, author_user_id, text, media_urls, status, like_count, comment_count, created_at, published_at, updated_at
 FROM contents WHERE content_id = $1
@@ -174,6 +264,32 @@ type IncrementCommentCountParams struct {
 
 func (q *Queries) IncrementCommentCount(ctx context.Context, arg IncrementCommentCountParams) error {
 	_, err := q.db.ExecContext(ctx, incrementCommentCount, arg.UpdatedAt, arg.ContentID)
+	return err
+}
+
+const insertContentOutbox = `-- name: InsertContentOutbox :exec
+INSERT INTO content_outbox (event_id, event_type, aggregate_id, topic, partition_key, payload)
+VALUES ($1, $2, $3, $4, $5, $6)
+`
+
+type InsertContentOutboxParams struct {
+	EventID      string `json:"event_id"`
+	EventType    string `json:"event_type"`
+	AggregateID  string `json:"aggregate_id"`
+	Topic        string `json:"topic"`
+	PartitionKey string `json:"partition_key"`
+	Payload      []byte `json:"payload"`
+}
+
+func (q *Queries) InsertContentOutbox(ctx context.Context, arg InsertContentOutboxParams) error {
+	_, err := q.db.ExecContext(ctx, insertContentOutbox,
+		arg.EventID,
+		arg.EventType,
+		arg.AggregateID,
+		arg.Topic,
+		arg.PartitionKey,
+		arg.Payload,
+	)
 	return err
 }
 
@@ -264,6 +380,39 @@ func (q *Queries) ListContents(ctx context.Context, arg ListContentsParams) ([]C
 	return items, nil
 }
 
+const lockContentForLike = `-- name: LockContentForLike :one
+SELECT content_id
+FROM contents
+WHERE content_id = $1
+FOR UPDATE
+`
+
+func (q *Queries) LockContentForLike(ctx context.Context, contentID string) (string, error) {
+	row := q.db.QueryRowContext(ctx, lockContentForLike, contentID)
+	var content_id string
+	err := row.Scan(&content_id)
+	return content_id, err
+}
+
+const markContentOutboxPublished = `-- name: MarkContentOutboxPublished :execrows
+UPDATE content_outbox
+SET published_at = CURRENT_TIMESTAMP, claimed_until = NULL, claim_token = NULL, last_error = ''
+WHERE outbox_id = $1 AND claim_token = $2 AND published_at IS NULL
+`
+
+type MarkContentOutboxPublishedParams struct {
+	OutboxID   int64          `json:"outbox_id"`
+	ClaimToken sql.NullString `json:"claim_token"`
+}
+
+func (q *Queries) MarkContentOutboxPublished(ctx context.Context, arg MarkContentOutboxPublishedParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, markContentOutboxPublished, arg.OutboxID, arg.ClaimToken)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const publishContent = `-- name: PublishContent :execrows
 UPDATE contents SET status = 2, published_at = $1, updated_at = $1 WHERE content_id = $2 AND status = 1
 `
@@ -281,7 +430,7 @@ func (q *Queries) PublishContent(ctx context.Context, arg PublishContentParams) 
 	return result.RowsAffected()
 }
 
-const removeLike = `-- name: RemoveLike :exec
+const removeLike = `-- name: RemoveLike :execrows
 DELETE FROM content_likes WHERE content_id = $1 AND user_id = $2
 `
 
@@ -290,9 +439,38 @@ type RemoveLikeParams struct {
 	UserID    string `json:"user_id"`
 }
 
-func (q *Queries) RemoveLike(ctx context.Context, arg RemoveLikeParams) error {
-	_, err := q.db.ExecContext(ctx, removeLike, arg.ContentID, arg.UserID)
-	return err
+func (q *Queries) RemoveLike(ctx context.Context, arg RemoveLikeParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, removeLike, arg.ContentID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const retryContentOutbox = `-- name: RetryContentOutbox :execrows
+UPDATE content_outbox
+SET next_attempt_at = $3, claimed_until = NULL, claim_token = NULL, last_error = $4
+WHERE outbox_id = $1 AND claim_token = $2 AND published_at IS NULL
+`
+
+type RetryContentOutboxParams struct {
+	OutboxID      int64          `json:"outbox_id"`
+	ClaimToken    sql.NullString `json:"claim_token"`
+	NextAttemptAt time.Time      `json:"next_attempt_at"`
+	LastError     string         `json:"last_error"`
+}
+
+func (q *Queries) RetryContentOutbox(ctx context.Context, arg RetryContentOutboxParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, retryContentOutbox,
+		arg.OutboxID,
+		arg.ClaimToken,
+		arg.NextAttemptAt,
+		arg.LastError,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }
 
 const updateLikeCount = `-- name: UpdateLikeCount :exec

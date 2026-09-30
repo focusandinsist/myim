@@ -46,6 +46,18 @@ func New() (*App, error) {
 func (a *App) Run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	workerCtx, cancelWorker := context.WithCancel(ctx)
+	workerDone := make(chan struct{})
+	go func() {
+		defer close(workerDone)
+		a.service.RunOutbox(workerCtx)
+	}()
+	defer func() {
+		cancelWorker()
+		<-workerDone
+		a.service.Stop()
+		_ = a.dao.Close()
+	}()
 	ch := make(chan error, 1)
 	go func() { ch <- a.server.ListenAndServe() }()
 	select {
@@ -55,10 +67,9 @@ func (a *App) Run() error {
 		}
 		return e
 	case <-ctx.Done():
-		a.service.Stop()
 		c, x := context.WithTimeout(context.Background(), 5*time.Second)
 		defer x()
 		_ = a.server.Shutdown(c)
-		return a.dao.Close()
+		return nil
 	}
 }

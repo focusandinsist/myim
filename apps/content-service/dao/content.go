@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
+	"myim/apps/content-service/event"
 	"myim/apps/content-service/model"
 	contentdb "myim/db/content"
 )
@@ -72,17 +74,23 @@ func (d *Dao) DeleteContent(ctx context.Context, contentID string) error {
 	return nil
 }
 
-func (d *Dao) ToggleLike(ctx context.Context, contentID, userID string, liked bool) (int64, error) {
+func (d *Dao) ToggleLike(ctx context.Context, contentID, userID, topic string, liked bool) (int64, error) {
 	tx, err := d.db.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, err
 	}
 	defer tx.Rollback()
 	queries := d.queries.WithTx(tx)
+	if _, err = queries.LockContentForLike(ctx, contentID); errors.Is(err, sql.ErrNoRows) {
+		return 0, ErrNotFound
+	} else if err != nil {
+		return 0, fmt.Errorf("lock content for like: %w", err)
+	}
+	var changed int64
 	if liked {
-		err = queries.AddLike(ctx, contentdb.AddLikeParams{ContentID: contentID, UserID: userID})
+		changed, err = queries.AddLike(ctx, contentdb.AddLikeParams{ContentID: contentID, UserID: userID})
 	} else {
-		err = queries.RemoveLike(ctx, contentdb.RemoveLikeParams{ContentID: contentID, UserID: userID})
+		changed, err = queries.RemoveLike(ctx, contentdb.RemoveLikeParams{ContentID: contentID, UserID: userID})
 	}
 	if err != nil {
 		return 0, err
@@ -91,8 +99,28 @@ func (d *Dao) ToggleLike(ctx context.Context, contentID, userID string, liked bo
 	if err != nil {
 		return 0, err
 	}
-	if err = queries.UpdateLikeCount(ctx, contentdb.UpdateLikeCountParams{LikeCount: count, UpdatedAt: time.Now(), ContentID: contentID}); err != nil {
-		return 0, err
+	if changed > 0 {
+		if err = queries.UpdateLikeCount(ctx, contentdb.UpdateLikeCountParams{LikeCount: count, UpdatedAt: time.Now(), ContentID: contentID}); err != nil {
+			return 0, err
+		}
+		eventType := "content.unliked.v1"
+		if liked {
+			eventType = "content.liked.v1"
+		}
+		envelope, err := event.LikeEnvelope(eventType, contentID, userID, liked)
+		if err != nil {
+			return 0, err
+		}
+		payload, err := json.Marshal(envelope)
+		if err != nil {
+			return 0, fmt.Errorf("marshal like event envelope: %w", err)
+		}
+		if err = queries.InsertContentOutbox(ctx, contentdb.InsertContentOutboxParams{
+			EventID: envelope.EventID, EventType: eventType, AggregateID: contentID,
+			Topic: topic, PartitionKey: contentID, Payload: payload,
+		}); err != nil {
+			return 0, fmt.Errorf("insert content outbox: %w", err)
+		}
 	}
 	if err = tx.Commit(); err != nil {
 		return 0, err
