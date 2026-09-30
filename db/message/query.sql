@@ -31,3 +31,28 @@ RETURNING message_id, request_id, conversation_id, sender_user_id, target_user_i
 
 -- name: DeleteMessage :execrows
 DELETE FROM messages WHERE message_id = $1;
+
+-- name: ListUserConversations :many
+SELECT c.conversation_id, peer.user_id AS peer_user_id, c.next_seq
+FROM conversation_members AS member
+JOIN conversations AS c ON c.conversation_id = member.conversation_id
+JOIN conversation_members AS peer ON peer.conversation_id = c.conversation_id AND peer.user_id <> member.user_id
+WHERE member.user_id = $1 AND c.conversation_type = 1 AND c.conversation_id > $2
+ORDER BY c.conversation_id ASC
+LIMIT $3;
+
+-- name: IsConversationMember :one
+SELECT EXISTS (
+    SELECT 1
+    FROM conversation_members
+    WHERE conversation_id = $1 AND user_id = $2
+);
+
+-- name: ListConversationMessages :many
+SELECT m.message_id, m.request_id, m.conversation_id, m.sender_user_id, m.target_user_id,
+    m.message_type, m.content, m.sent_at, m.seq
+FROM messages AS m
+JOIN conversation_members AS member ON member.conversation_id = m.conversation_id
+WHERE m.conversation_id = $1 AND member.user_id = $2 AND m.seq > $3
+ORDER BY m.seq ASC
+LIMIT $4;

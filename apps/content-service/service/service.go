@@ -40,6 +40,13 @@ func New(c *config.Config, d *contentdao.Dao) *Service {
 	if kafkaPublisher, err := event.NewSaramaPublisher(c.KafkaBrokers); err == nil {
 		publisher = kafkaPublisher
 	}
+	return NewWithPublisher(c, d, publisher)
+}
+
+func NewWithPublisher(c *config.Config, d *contentdao.Dao, publisher event.Publisher) *Service {
+	if publisher == nil {
+		publisher = event.LogPublisher{}
+	}
 	return &Service{
 		config:    c,
 		dao:       d,

@@ -64,7 +64,7 @@ Content 的 `/content/create` 用于创建草稿或直接发布（由 `publish` 
 ### 当前接口
 
 - user service：`POST /user-register`、`POST /user-login`、`POST /my-profile`、`POST /target-profile`。
-- message service：`GET /health`、`GET /ws`，其中 `/ws` 使用 Bearer Token 和 protobuf 二进制帧。
+- message service：`GET /health`、`GET /ws`、`POST /message/conversations`、`POST /message/history`；`/ws` 使用 Bearer Token 和 protobuf 二进制帧。
 - content service：`POST /content/create`、`/content/publish`、`/content/get`、`/content/list`、`/content/delete`、`/content/like`、`/content/unlike`、`/content/comment`、`/content/comments`、`/content/comment/delete`。
 - social service：`POST /social/follow`、`POST /social/unfollow`、`POST /social/following-list`、`POST /social/follower-list`、`POST /social/follow-check`。
 - 四个服务均提供 `GET /health`，成功返回 HTTP 204。
@@ -82,7 +82,7 @@ HTTP 请求支持 JSON 和 protobuf binding；响应根据 `Accept` 或请求 `C
 
 `service.Service` 当前直接持有一个具体 `*dao.Dao`。所有 SQL 和 `sql.DB` 仍封装在 DAO 内，Service 不直接操作数据库连接池；新增 friend、message 业务时继续在 DAO 和 Service 中按文件组织，等出现独立部署和数据所有权后再拆服务。
 
-message service 维护本实例内存连接，支持一个用户一条连接、单聊 PUSH 和发送方 ACK。每一对单聊用户对应一个正式 `conversation_id`，`messages.seq` 在会话内递增；消息先写入 PostgreSQL `messages` 表，ACK 表示已持久化，不表示对方已收到或已读。目标离线时消息仍保留，但历史消息/离线补拉尚未实现。真实 WebSocket 连接始终保存在所属进程内存，后续 Redis 只保存用户到 gateway 的路由元数据。详细演进计划见 `docs/message-architecture-evolution.md`。
+message service 维护本实例内存连接，支持一个用户一条连接、单聊 PUSH 和发送方 ACK。每一对单聊用户对应一个正式 `conversation_id`，`messages.seq` 在会话内递增；消息先写入 PostgreSQL `messages` 表，ACK 表示已持久化，不表示对方已收到或已读。目标离线时消息仍保留；重连后可列出当前用户会话，并按每个会话的 `after_seq` 分页补拉。客户端以 `(conversation_id, seq)` 去重，处理并持久保存消息后才推进本地序号。真实 WebSocket 连接始终保存在所属进程内存，后续 Redis 只保存用户到 gateway 的路由元数据。详细演进计划见 `docs/message-architecture-evolution.md`。
 
 ### 本地运行
 
@@ -111,6 +111,8 @@ go run ./client/user-53c8
 当前使用 PostgreSQL，四个 DAO 启动时统一执行 `internal/migration` 中已登记的版本化迁移，使用事务、并发锁和 SQL 校验记录；表结构与索引按服务编号，SQLC 直接读取 migration SQL。手动升级和回滚可使用 `go run ./cmd/migrate`，详见 [数据库迁移说明](docs/database-migrations.md)。首次初始化要求空数据库或空 schema，不自动兼容旧开发库。User 目前包含账号、联系方式、基础社交资料、状态和时间字段；兴趣、关系、在线状态、内容等数据应放在独立业务表。
 
 P0-1 migration 已于 2026-09-29 21:06 +08:00 完成，验证结果见 [本次进度记录](docs/progress-2026-09-29-database-migrations.md)。
+
+P1-4 消息历史与离线补拉已于 2026-09-30 11:08 +08:00 完成，接口、权限和验证结果见 [消息历史进度记录](docs/progress-2026-09-30-message-history.md)。
 
 ### 新 Agent 开始工作前
 

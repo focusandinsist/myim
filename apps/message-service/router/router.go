@@ -23,6 +23,8 @@ func New(conf *config.Config, serv *service.Service) *gin.Engine {
 
 	router.GET("/health", func(c *gin.Context) { c.Status(http.StatusNoContent) })
 	router.GET("/ws", HandleCGConnection)
+	router.POST("/message/conversations", HandleCGConversationList) // 列出当前用户的单聊会话
+	router.POST("/message/history", HandleCGMessageHistory)         // 按会话序号分页读取历史消息
 
 	return router
 }

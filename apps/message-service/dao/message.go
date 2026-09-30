@@ -11,6 +11,38 @@ import (
 )
 
 var ErrMessageNotFound = errors.New("message not found")
+var ErrConversationNotFound = errors.New("conversation not found")
+
+func (d *Dao) ListUserConversations(ctx context.Context, userID, afterID string, limit int32) ([]model.ConversationSummary, error) {
+	rows, err := d.queries.ListUserConversations(ctx, messagedb.ListUserConversationsParams{UserID: userID, ConversationID: afterID, Limit: limit})
+	if err != nil {
+		return nil, fmt.Errorf("list user conversations: %w", err)
+	}
+	result := make([]model.ConversationSummary, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, model.ConversationSummary{ConversationID: row.ConversationID, PeerUserID: row.PeerUserID, LatestSeq: row.NextSeq})
+	}
+	return result, nil
+}
+
+func (d *Dao) ListConversationMessages(ctx context.Context, userID, conversationID string, afterSeq int64, limit int32) ([]model.Message, error) {
+	member, err := d.queries.IsConversationMember(ctx, messagedb.IsConversationMemberParams{ConversationID: conversationID, UserID: userID})
+	if err != nil {
+		return nil, fmt.Errorf("check conversation membership: %w", err)
+	}
+	if !member {
+		return nil, ErrConversationNotFound
+	}
+	rows, err := d.queries.ListConversationMessages(ctx, messagedb.ListConversationMessagesParams{ConversationID: conversationID, UserID: userID, Seq: afterSeq, Limit: limit})
+	if err != nil {
+		return nil, fmt.Errorf("list conversation messages: %w", err)
+	}
+	result := make([]model.Message, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, model.Message{MessageID: row.MessageID, RequestID: row.RequestID, ConversationID: row.ConversationID, SenderUserID: row.SenderUserID, TargetUserID: row.TargetUserID, MessageType: int32(row.MessageType), Content: row.Content, SentAt: row.SentAt, Seq: row.Seq})
+	}
+	return result, nil
+}
 
 func (d *Dao) SaveMessage(ctx context.Context, message *model.Message) (*model.Message, error) {
 	tx, err := d.db.BeginTx(ctx, nil)

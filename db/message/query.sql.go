@@ -203,3 +203,135 @@ func (q *Queries) InsertMessage(ctx context.Context, arg InsertMessageParams) (I
 	)
 	return i, err
 }
+
+const isConversationMember = `-- name: IsConversationMember :one
+SELECT EXISTS (
+    SELECT 1
+    FROM conversation_members
+    WHERE conversation_id = $1 AND user_id = $2
+)
+`
+
+type IsConversationMemberParams struct {
+	ConversationID string `json:"conversation_id"`
+	UserID         string `json:"user_id"`
+}
+
+func (q *Queries) IsConversationMember(ctx context.Context, arg IsConversationMemberParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, isConversationMember, arg.ConversationID, arg.UserID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const listConversationMessages = `-- name: ListConversationMessages :many
+SELECT m.message_id, m.request_id, m.conversation_id, m.sender_user_id, m.target_user_id,
+    m.message_type, m.content, m.sent_at, m.seq
+FROM messages AS m
+JOIN conversation_members AS member ON member.conversation_id = m.conversation_id
+WHERE m.conversation_id = $1 AND member.user_id = $2 AND m.seq > $3
+ORDER BY m.seq ASC
+LIMIT $4
+`
+
+type ListConversationMessagesParams struct {
+	ConversationID string `json:"conversation_id"`
+	UserID         string `json:"user_id"`
+	Seq            int64  `json:"seq"`
+	Limit          int32  `json:"limit"`
+}
+
+type ListConversationMessagesRow struct {
+	MessageID      string `json:"message_id"`
+	RequestID      string `json:"request_id"`
+	ConversationID string `json:"conversation_id"`
+	SenderUserID   string `json:"sender_user_id"`
+	TargetUserID   string `json:"target_user_id"`
+	MessageType    int16  `json:"message_type"`
+	Content        string `json:"content"`
+	SentAt         int64  `json:"sent_at"`
+	Seq            int64  `json:"seq"`
+}
+
+func (q *Queries) ListConversationMessages(ctx context.Context, arg ListConversationMessagesParams) ([]ListConversationMessagesRow, error) {
+	rows, err := q.db.QueryContext(ctx, listConversationMessages,
+		arg.ConversationID,
+		arg.UserID,
+		arg.Seq,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListConversationMessagesRow
+	for rows.Next() {
+		var i ListConversationMessagesRow
+		if err := rows.Scan(
+			&i.MessageID,
+			&i.RequestID,
+			&i.ConversationID,
+			&i.SenderUserID,
+			&i.TargetUserID,
+			&i.MessageType,
+			&i.Content,
+			&i.SentAt,
+			&i.Seq,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUserConversations = `-- name: ListUserConversations :many
+SELECT c.conversation_id, peer.user_id AS peer_user_id, c.next_seq
+FROM conversation_members AS member
+JOIN conversations AS c ON c.conversation_id = member.conversation_id
+JOIN conversation_members AS peer ON peer.conversation_id = c.conversation_id AND peer.user_id <> member.user_id
+WHERE member.user_id = $1 AND c.conversation_type = 1 AND c.conversation_id > $2
+ORDER BY c.conversation_id ASC
+LIMIT $3
+`
+
+type ListUserConversationsParams struct {
+	UserID         string `json:"user_id"`
+	ConversationID string `json:"conversation_id"`
+	Limit          int32  `json:"limit"`
+}
+
+type ListUserConversationsRow struct {
+	ConversationID string `json:"conversation_id"`
+	PeerUserID     string `json:"peer_user_id"`
+	NextSeq        int64  `json:"next_seq"`
+}
+
+func (q *Queries) ListUserConversations(ctx context.Context, arg ListUserConversationsParams) ([]ListUserConversationsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listUserConversations, arg.UserID, arg.ConversationID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListUserConversationsRow
+	for rows.Next() {
+		var i ListUserConversationsRow
+		if err := rows.Scan(&i.ConversationID, &i.PeerUserID, &i.NextSeq); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

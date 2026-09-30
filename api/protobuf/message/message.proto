@@ -29,6 +29,12 @@ message Message {
     int64 seq = 9; // 会话内递增消息序号
 }
 
+message Conversation {
+    string conversation_id = 1; // 会话ID
+    string peer_user_id = 2; // 单聊对方用户ID
+    int64 latest_seq = 3; // 会话当前最大已分配消息序号
+}
+
 message CGWSMessage {
     WSAction action = 1; // WebSocket请求动作
     string request_id = 2; // 客户端生成的请求ID
@@ -43,4 +49,29 @@ message GCWSMessage {
     WSAction action = 3; // WebSocket响应动作
     string request_id = 4; // 对应的客户端请求ID
     Message message = 5; // 消息确认或推送携带的消息体
+}
+
+message CGConversationList {
+    string after_conversation_id = 1; // 排他分页游标，首次请求留空
+    int32 page_size = 2; // 每页会话数，0使用默认值
+}
+message GCConversationList {
+    int32 error_code = 1; // 错误码，0表示成功
+    string error_msg = 2; // 错误信息
+    repeated Conversation conversations = 3; // 当前用户的会话
+    string next_conversation_id = 4; // 下一页排他游标
+    bool has_more = 5; // 是否还有更多会话
+}
+
+message CGMessageHistory {
+    string conversation_id = 1; // 目标会话ID
+    int64 after_seq = 2; // 排他消息序号，0表示从第一条开始
+    int32 page_size = 3; // 每页消息数，0使用默认值
+}
+message GCMessageHistory {
+    int32 error_code = 1; // 错误码，0表示成功
+    string error_msg = 2; // 错误信息
+    repeated Message messages = 3; // 按会话序号升序排列的消息
+    int64 next_seq = 4; // 下一页排他游标，无消息时等于请求的after_seq
+    bool has_more = 5; // 是否还有更多消息
 }

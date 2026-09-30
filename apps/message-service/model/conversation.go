@@ -13,3 +13,9 @@ type ConversationMember struct {
 	ConversationID string `json:"conversation_id"` // 会话ID
 	UserID         string `json:"user_id"`         // 会话成员用户ID
 }
+
+type ConversationSummary struct {
+	ConversationID string `json:"conversation_id"` // 会话ID
+	PeerUserID     string `json:"peer_user_id"`    // 单聊对方用户ID
+	LatestSeq      int64  `json:"latest_seq"`      // 当前最大已分配消息序号
+}
