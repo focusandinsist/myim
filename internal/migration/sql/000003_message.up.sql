@@ -25,3 +25,5 @@ CREATE TABLE messages (
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT messages_sender_request_unique UNIQUE (sender_user_id, request_id)
 );
+CREATE INDEX messages_conversation_seq_idx ON messages (conversation_id, seq);
+CREATE INDEX conversation_members_user_idx ON conversation_members (user_id, conversation_id);

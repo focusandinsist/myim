@@ -1,9 +1,3 @@
--- users is owned by user-service but is visible because services currently share PostgreSQL.
-CREATE TABLE users (
-    user_id VARCHAR(36) PRIMARY KEY,
-    status SMALLINT NOT NULL DEFAULT 0
-);
-
 CREATE TABLE follows (
     follower_user_id VARCHAR(36) NOT NULL,
     followee_user_id VARCHAR(36) NOT NULL,
@@ -13,3 +7,5 @@ CREATE TABLE follows (
     PRIMARY KEY (follower_user_id, followee_user_id),
     CHECK (follower_user_id <> followee_user_id)
 );
+CREATE INDEX follows_follower_status_updated_idx ON follows (follower_user_id, status, updated_at DESC);
+CREATE INDEX follows_followee_status_updated_idx ON follows (followee_user_id, status, updated_at DESC);

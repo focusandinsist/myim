@@ -1,7 +1,7 @@
 version: "2"
 sql:
   - engine: "postgresql"
-    schema: "db/user/schema.sql"
+    schema: "internal/migration/sql/000001_user.up.sql"
     queries: "db/user/query.sql"
     gen:
       go:
@@ -10,7 +10,7 @@ sql:
         sql_package: "database/sql"
         emit_json_tags: true
   - engine: "postgresql"
-    schema: "db/message/schema.sql"
+    schema: "internal/migration/sql/000003_message.up.sql"
     queries: "db/message/query.sql"
     gen:
       go:
@@ -19,7 +19,9 @@ sql:
         sql_package: "database/sql"
         emit_json_tags: true
   - engine: "postgresql"
-    schema: "db/social/schema.sql"
+    schema:
+      - "internal/migration/sql/000001_user.up.sql"
+      - "internal/migration/sql/000002_social.up.sql"
     queries: "db/social/query.sql"
     gen:
       go:
@@ -28,7 +30,7 @@ sql:
         sql_package: "database/sql"
         emit_json_tags: true
   - engine: "postgresql"
-    schema: "db/content/schema.sql"
+    schema: "internal/migration/sql/000004_content.up.sql"
     queries: "db/content/query.sql"
     gen:
       go:

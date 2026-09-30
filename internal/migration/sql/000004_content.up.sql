@@ -25,3 +25,5 @@ CREATE TABLE content_comments (
     status SMALLINT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX contents_author_status_created_idx ON contents (author_user_id, status, created_at DESC);
+CREATE INDEX content_comments_content_status_created_idx ON content_comments (content_id, status, created_at ASC);

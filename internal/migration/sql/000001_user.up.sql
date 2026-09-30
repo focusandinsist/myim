@@ -15,3 +15,4 @@ CREATE TABLE users (
     last_login_time BIGINT NOT NULL DEFAULT 0,
     updated_time BIGINT NOT NULL DEFAULT 0
 );
+CREATE UNIQUE INDEX users_user_name_lower_idx ON users (LOWER(user_name));

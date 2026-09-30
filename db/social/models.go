@@ -17,6 +17,19 @@ type Follow struct {
 }
 
 type User struct {
-	UserID string `json:"user_id"`
-	Status int16  `json:"status"`
+	UserID        string `json:"user_id"`
+	UserName      string `json:"user_name"`
+	Password      string `json:"password"`
+	Phone         string `json:"phone"`
+	Email         string `json:"email"`
+	Nickname      string `json:"nickname"`
+	Avatar        string `json:"avatar"`
+	Bio           string `json:"bio"`
+	Gender        int16  `json:"gender"`
+	Birthday      int64  `json:"birthday"`
+	Region        string `json:"region"`
+	Status        int16  `json:"status"`
+	RegisterTime  int64  `json:"register_time"`
+	LastLoginTime int64  `json:"last_login_time"`
+	UpdatedTime   int64  `json:"updated_time"`
 }

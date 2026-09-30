@@ -27,7 +27,7 @@ bazel-*
 *.zip
 
 /test/
-/docs/
+/docs/*
 /skills/
 /client/
 /README.md
