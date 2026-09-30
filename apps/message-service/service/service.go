@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 	"sync"
@@ -17,6 +18,13 @@ import (
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 )
+
+func (s *Service) Health(ctx context.Context) error {
+	if s == nil || s.dao == nil {
+		return errors.New("message database is unavailable")
+	}
+	return s.dao.Ping(ctx)
+}
 
 type client struct {
 	userID   string          // 已通过JWT认证的用户ID

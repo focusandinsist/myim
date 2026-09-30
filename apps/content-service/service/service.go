@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 	proto "myim/api/protobuf/content"
@@ -23,6 +24,13 @@ var (
 	ErrUserNotFound = errors.New("user not found") // 目标用户不存在
 )
 
+const (
+	maxContentTextRunes = 5000
+	maxContentMediaURLs = 9
+	maxMediaURLBytes    = 2048
+	maxCommentRunes     = 2000
+)
+
 type Service struct {
 	config    *config.Config  // Content服务配置
 	dao       *contentdao.Dao // Content PostgreSQL数据访问对象
@@ -33,6 +41,13 @@ func (s *Service) Stop() {
 	if publisher, ok := s.publisher.(interface{ Close() error }); ok {
 		_ = publisher.Close()
 	}
+}
+
+func (s *Service) Health(ctx context.Context) error {
+	if s == nil || s.dao == nil {
+		return errors.New("content database is unavailable")
+	}
+	return s.dao.Ping(ctx)
 }
 
 func New(c *config.Config, d *contentdao.Dao) *Service {
@@ -101,6 +116,16 @@ func (s *Service) HandleCGContentCreate(ctx context.Context, in *proto.CGContent
 	if in == nil || strings.TrimSpace(in.Text) == "" {
 		output.ErrorCode = http.StatusBadRequest
 		return output, fmt.Errorf("%w: text is required", ErrInvalidInput)
+	}
+	if utf8.RuneCountInString(in.Text) > maxContentTextRunes || len(in.MediaUrls) > maxContentMediaURLs {
+		output.ErrorCode = http.StatusBadRequest
+		return output, fmt.Errorf("%w: text or media URL limit exceeded", ErrInvalidInput)
+	}
+	for _, mediaURL := range in.MediaUrls {
+		if strings.TrimSpace(mediaURL) == "" || len(mediaURL) > maxMediaURLBytes {
+			output.ErrorCode = http.StatusBadRequest
+			return output, fmt.Errorf("%w: each media URL must contain 1 to %d bytes", ErrInvalidInput, maxMediaURLBytes)
+		}
 	}
 	now := time.Now()
 	content := &model.Content{
@@ -268,9 +293,9 @@ func (s *Service) HandleCGContentComment(ctx context.Context, in *proto.CGConten
 		output.ErrorCode = http.StatusUnauthorized
 		return output, err
 	}
-	if strings.TrimSpace(in.Text) == "" {
+	if in == nil || strings.TrimSpace(in.Text) == "" || utf8.RuneCountInString(in.Text) > maxCommentRunes || len(in.ParentId) > 36 {
 		output.ErrorCode = http.StatusBadRequest
-		return output, ErrInvalidInput
+		return output, fmt.Errorf("%w: comment text or parent_id is invalid", ErrInvalidInput)
 	}
 	if _, err = s.dao.GetContent(ctx, in.ContentId); err != nil {
 		output.ErrorCode = http.StatusNotFound

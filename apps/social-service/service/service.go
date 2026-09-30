@@ -1,9 +1,19 @@
 package service
 
 import (
+	"context"
+	"errors"
+
 	"myim/apps/social-service/config"
 	"myim/apps/social-service/dao"
 )
+
+func (s *Service) Health(ctx context.Context) error {
+	if s == nil || s.dao == nil {
+		return errors.New("social database is unavailable")
+	}
+	return s.dao.Ping(ctx)
+}
 
 type Service struct {
 	config *config.Config // Social服务配置

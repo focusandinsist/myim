@@ -33,7 +33,15 @@ func New(c *config.Config) (*Dao, error) {
 		_ = db.Close()
 		return nil, fmt.Errorf("run database migrations: %w", err)
 	}
+	if err := db.PingContext(ctx); err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("ping postgres after migrations: %w", err)
+	}
 	return &Dao{db: db, queries: contentdb.New(db)}, nil
+}
+
+func (d *Dao) Ping(ctx context.Context) error {
+	return d.db.PingContext(ctx)
 }
 
 func (d *Dao) Close() error { return d.db.Close() }

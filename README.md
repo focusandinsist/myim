@@ -67,7 +67,7 @@ Content 的 `/content/create` 用于创建草稿或直接发布（由 `publish` 
 - message service：`GET /health`、`GET /ws`、`POST /message/conversations`、`POST /message/history`；`/ws` 使用 Bearer Token 和 protobuf 二进制帧。
 - content service：`POST /content/create`、`/content/publish`、`/content/get`、`/content/list`、`/content/delete`、`/content/like`、`/content/unlike`、`/content/comment`、`/content/comments`、`/content/comment/delete`。
 - social service：`POST /social/follow`、`POST /social/unfollow`、`POST /social/following-list`、`POST /social/follower-list`、`POST /social/follow-check`。
-- 四个服务均提供 `GET /health`，成功返回 HTTP 204。
+- 四个服务均提供 `GET /health`（进程存活，返回 HTTP 204）、`GET /ready`（数据库连接正常返回 HTTP 204，否则 503）和 `GET /metrics`（HTTP 请求数与耗时累计值）。
 
 请求字段、响应字段、状态码和 WebSocket 帧定义见 [`docs/api.md`](docs/api.md)；后续优化顺序和与 face 对话的推进方式见 [`docs/todo.md`](docs/todo.md)。
 
@@ -79,6 +79,8 @@ Content 的 `/content/create` 用于创建草稿或直接发布（由 `publish` 
 令牌缺失、格式错误或签名不匹配返回 `invalid access token`；签名和内容合法但超过 `exp` 返回 `expired access token`。两者 HTTP 状态码都是 401。
 
 HTTP 请求支持 JSON 和 protobuf binding；响应根据 `Accept` 或请求 `Content-Type` 返回 protobuf 或 protobuf JSON。所有 protobuf 响应前两个字段固定为 `error_code`、`error_msg`。
+
+所有 HTTP 请求接受合法的 `X-Request-ID`（1-64 个字母、数字、点、下划线或连字符）；缺失或格式不合法时服务生成 UUID。该值会放入 `context.Context`、写入响应头，并包含在结构化访问日志中。HTTP 请求体上限为 1 MiB；Content 文本最多 5000 字符，最多 9 个媒体 URL、每个最多 2048 字节；评论最多 2000 字符。各 HTTP 服务配置请求头、读写、空闲及关闭超时；message-service 保留 WebSocket 长连接所需的读写设置。
 
 `service.Service` 当前直接持有一个具体 `*dao.Dao`。所有 SQL 和 `sql.DB` 仍封装在 DAO 内，Service 不直接操作数据库连接池；新增 friend、message 业务时继续在 DAO 和 Service 中按文件组织，等出现独立部署和数据所有权后再拆服务。
 
@@ -115,6 +117,8 @@ P0-1 migration 已于 2026-09-29 21:06 +08:00 完成，验证结果见 [本次�
 P1-4 消息历史与离线补拉已于 2026-09-30 11:08 +08:00 完成，接口、权限和验证结果见 [消息历史进度记录](docs/progress-2026-09-30-message-history.md)。
 
 P1-5 Content 点赞事件 Transactional Outbox 已于 2026-09-30 11:20 +08:00 完成，重试、租约和保留策略见 [Outbox 进度记录](docs/progress-2026-09-30-content-outbox.md)。
+
+P1-6 输入限制、request ID、HTTP 指标、数据库就绪检查和优雅关闭已于 2026-09-30 11:46 +08:00 完成，验证见 [可观测性进度记录](docs/progress-2026-09-30-observability.md)。
 
 ### 新 Agent 开始工作前
 

@@ -9,12 +9,12 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
-	"time"
 
 	"myim/apps/message-service/config"
 	"myim/apps/message-service/dao"
 	"myim/apps/message-service/router"
 	"myim/apps/message-service/service"
+	"myim/internal/runtimeconfig"
 )
 
 type App struct {
@@ -28,8 +28,8 @@ type App struct {
 
 func New() (*App, error) {
 	conf := config.New()
-	if err := conf.Auth.Validate(); err != nil {
-		return nil, fmt.Errorf("validate auth config: %w", err)
+	if err := conf.Validate(); err != nil {
+		return nil, fmt.Errorf("validate message service config: %w", err)
 	}
 	dao, err := dao.New(conf)
 	if err != nil {
@@ -38,16 +38,10 @@ func New() (*App, error) {
 	serv := service.New(conf, dao)
 	handler := router.New(conf, serv)
 	return &App{
-		config:  conf,
-		dao:     dao,
-		service: serv,
-		httpServer: &http.Server{
-			Addr:              conf.Addr,
-			Handler:           handler,
-			ReadHeaderTimeout: 5 * time.Second,
-			IdleTimeout:       60 * time.Second,
-			MaxHeaderBytes:    1 << 20,
-		},
+		config:     conf,
+		dao:        dao,
+		service:    serv,
+		httpServer: conf.HTTP.Server(conf.Addr, handler, true),
 	}, nil
 }
 
@@ -61,7 +55,7 @@ func (a *App) Run() error {
 
 	select {
 	case err := <-serverError:
-		shutdownContext, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		shutdownContext, cancel := context.WithTimeout(context.Background(), a.config.HTTP.ShutdownTimeout)
 		defer cancel()
 		stopErr := a.Stop(shutdownContext)
 		if !errors.Is(err, http.ErrServerClosed) {
@@ -73,7 +67,7 @@ func (a *App) Run() error {
 		}
 		return stopErr
 	case <-stopContext.Done():
-		shutdownContext, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		shutdownContext, cancel := context.WithTimeout(context.Background(), a.config.HTTP.ShutdownTimeout)
 		defer cancel()
 		return a.Stop(shutdownContext)
 	}
@@ -83,10 +77,12 @@ func (a *App) Stop(ctx context.Context) error {
 	a.stopOnce.Do(func() {
 		var stopErrors []error
 		a.service.Stop()
-		if err := a.httpServer.Shutdown(ctx); err != nil {
+		if err := runtimeconfig.ShutdownHTTP(ctx, a.httpServer); err != nil {
 			stopErrors = append(stopErrors, fmt.Errorf("shutdown message server: %w", err))
 		}
-		if err := a.dao.Close(); err != nil {
+		if err := router.Wait(ctx); err != nil {
+			stopErrors = append(stopErrors, fmt.Errorf("wait for message HTTP handlers: %w", err))
+		} else if err := a.dao.Close(); err != nil {
 			stopErrors = append(stopErrors, fmt.Errorf("close message dao: %w", err))
 		}
 		a.stopErr = errors.Join(stopErrors...)

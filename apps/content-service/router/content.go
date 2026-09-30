@@ -1,8 +1,6 @@
 package router
 
 import (
-	"net/http"
-
 	proto "myim/api/protobuf/content"
 	"myim/internal/auth"
 	"myim/internal/httpx"
@@ -13,10 +11,7 @@ import (
 func HandleCGContentCreate(c *gin.Context) {
 	input := new(proto.CGContentCreate)
 	output := new(proto.GCContentCreate)
-	if err := c.ShouldBind(input); err != nil {
-		output.ErrorCode = http.StatusBadRequest
-		output.ErrorMsg = httpx.ErrInvalidRequest.Error()
-		httpx.Response(c, output, httpx.ErrInvalidRequest)
+	if !httpx.Bind(c, input, output) {
 		return
 	}
 	output, err := serv.HandleCGContentCreate(c.Request.Context(), input, auth.BearerToken(c.GetHeader("Authorization")))
@@ -26,10 +21,7 @@ func HandleCGContentCreate(c *gin.Context) {
 func HandleCGContentPublish(c *gin.Context) {
 	input := new(proto.CGContentPublish)
 	output := new(proto.GCContentPublish)
-	if err := c.ShouldBind(input); err != nil {
-		output.ErrorCode = http.StatusBadRequest
-		output.ErrorMsg = httpx.ErrInvalidRequest.Error()
-		httpx.Response(c, output, httpx.ErrInvalidRequest)
+	if !httpx.Bind(c, input, output) {
 		return
 	}
 	output, err := serv.HandleCGContentPublish(c.Request.Context(), input, auth.BearerToken(c.GetHeader("Authorization")))
@@ -39,10 +31,7 @@ func HandleCGContentPublish(c *gin.Context) {
 func HandleCGContentGet(c *gin.Context) {
 	input := new(proto.CGContentGet)
 	output := new(proto.GCContentGet)
-	if err := c.ShouldBind(input); err != nil {
-		output.ErrorCode = http.StatusBadRequest
-		output.ErrorMsg = httpx.ErrInvalidRequest.Error()
-		httpx.Response(c, output, httpx.ErrInvalidRequest)
+	if !httpx.Bind(c, input, output) {
 		return
 	}
 	output, err := serv.HandleCGContentGet(c.Request.Context(), input, auth.BearerToken(c.GetHeader("Authorization")))
@@ -52,10 +41,7 @@ func HandleCGContentGet(c *gin.Context) {
 func HandleCGContentList(c *gin.Context) {
 	input := new(proto.CGContentList)
 	output := new(proto.GCContentList)
-	if err := c.ShouldBind(input); err != nil {
-		output.ErrorCode = http.StatusBadRequest
-		output.ErrorMsg = httpx.ErrInvalidRequest.Error()
-		httpx.Response(c, output, httpx.ErrInvalidRequest)
+	if !httpx.Bind(c, input, output) {
 		return
 	}
 	output, err := serv.HandleCGContentList(c.Request.Context(), input, auth.BearerToken(c.GetHeader("Authorization")))
@@ -65,10 +51,7 @@ func HandleCGContentList(c *gin.Context) {
 func HandleCGContentDelete(c *gin.Context) {
 	input := new(proto.CGContentDelete)
 	output := new(proto.GCContentDelete)
-	if err := c.ShouldBind(input); err != nil {
-		output.ErrorCode = http.StatusBadRequest
-		output.ErrorMsg = httpx.ErrInvalidRequest.Error()
-		httpx.Response(c, output, httpx.ErrInvalidRequest)
+	if !httpx.Bind(c, input, output) {
 		return
 	}
 	output, err := serv.HandleCGContentDelete(c.Request.Context(), input, auth.BearerToken(c.GetHeader("Authorization")))
@@ -78,10 +61,7 @@ func HandleCGContentDelete(c *gin.Context) {
 func HandleCGContentLike(c *gin.Context) {
 	input := new(proto.CGContentLike)
 	output := new(proto.GCContentLike)
-	if err := c.ShouldBind(input); err != nil {
-		output.ErrorCode = http.StatusBadRequest
-		output.ErrorMsg = httpx.ErrInvalidRequest.Error()
-		httpx.Response(c, output, httpx.ErrInvalidRequest)
+	if !httpx.Bind(c, input, output) {
 		return
 	}
 	output, err := serv.HandleCGContentLike(c.Request.Context(), input, auth.BearerToken(c.GetHeader("Authorization")))
@@ -91,10 +71,7 @@ func HandleCGContentLike(c *gin.Context) {
 func HandleCGContentUnlike(c *gin.Context) {
 	input := new(proto.CGContentUnlike)
 	output := new(proto.GCContentUnlike)
-	if err := c.ShouldBind(input); err != nil {
-		output.ErrorCode = http.StatusBadRequest
-		output.ErrorMsg = httpx.ErrInvalidRequest.Error()
-		httpx.Response(c, output, httpx.ErrInvalidRequest)
+	if !httpx.Bind(c, input, output) {
 		return
 	}
 	output, err := serv.HandleCGContentUnlike(c.Request.Context(), input, auth.BearerToken(c.GetHeader("Authorization")))
@@ -104,10 +81,7 @@ func HandleCGContentUnlike(c *gin.Context) {
 func HandleCGContentComment(c *gin.Context) {
 	input := new(proto.CGContentComment)
 	output := new(proto.GCContentComment)
-	if err := c.ShouldBind(input); err != nil {
-		output.ErrorCode = http.StatusBadRequest
-		output.ErrorMsg = httpx.ErrInvalidRequest.Error()
-		httpx.Response(c, output, httpx.ErrInvalidRequest)
+	if !httpx.Bind(c, input, output) {
 		return
 	}
 	output, err := serv.HandleCGContentComment(c.Request.Context(), input, auth.BearerToken(c.GetHeader("Authorization")))
@@ -117,10 +91,7 @@ func HandleCGContentComment(c *gin.Context) {
 func HandleCGContentComments(c *gin.Context) {
 	input := new(proto.CGContentComments)
 	output := new(proto.GCContentComments)
-	if err := c.ShouldBind(input); err != nil {
-		output.ErrorCode = http.StatusBadRequest
-		output.ErrorMsg = httpx.ErrInvalidRequest.Error()
-		httpx.Response(c, output, httpx.ErrInvalidRequest)
+	if !httpx.Bind(c, input, output) {
 		return
 	}
 	output, err := serv.HandleCGContentComments(c.Request.Context(), input, auth.BearerToken(c.GetHeader("Authorization")))
@@ -130,10 +101,7 @@ func HandleCGContentComments(c *gin.Context) {
 func HandleCGContentCommentDelete(c *gin.Context) {
 	input := new(proto.CGContentCommentDelete)
 	output := new(proto.GCContentCommentDelete)
-	if err := c.ShouldBind(input); err != nil {
-		output.ErrorCode = http.StatusBadRequest
-		output.ErrorMsg = httpx.ErrInvalidRequest.Error()
-		httpx.Response(c, output, httpx.ErrInvalidRequest)
+	if !httpx.Bind(c, input, output) {
 		return
 	}
 	output, err := serv.HandleCGContentCommentDelete(c.Request.Context(), input, auth.BearerToken(c.GetHeader("Authorization")))

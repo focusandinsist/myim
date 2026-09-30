@@ -1,8 +1,11 @@
 package httpx
 
 import (
+	"errors"
 	"net/http"
 	"strings"
+
+	"myim/internal/observability"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -14,6 +17,9 @@ func Response(c *gin.Context, obj any, err error) {
 	statusCode := http.StatusOK
 	if err != nil {
 		statusCode = http.StatusInternalServerError
+		if errors.Is(err, ErrRequestBodyTooLarge) {
+			statusCode = http.StatusRequestEntityTooLarge
+		}
 		protoMessage, ok := obj.(proto.Message)
 		if ok && protoMessage != nil {
 			reflection := protoMessage.ProtoReflect()
@@ -57,4 +63,32 @@ func Response(c *gin.Context, obj any, err error) {
 		}
 	}
 	c.JSON(statusCode, obj)
+}
+
+// Bind parses a JSON or form request body and writes the protocol error response
+// when parsing fails. MaxBytesReader errors are exposed as HTTP 413.
+func Bind(c *gin.Context, input, output proto.Message) bool {
+	if err := c.ShouldBind(input); err != nil {
+		var maxErr *http.MaxBytesError
+		if errors.As(err, &maxErr) || observability.BodyLimitExceeded(c.Request.Context()) {
+			setErrorCode(output, http.StatusRequestEntityTooLarge)
+			Response(c, output, ErrRequestBodyTooLarge)
+			return false
+		}
+		setErrorCode(output, http.StatusBadRequest)
+		Response(c, output, ErrInvalidRequest)
+		return false
+	}
+	return true
+}
+
+func setErrorCode(obj proto.Message, status int) {
+	if obj == nil {
+		return
+	}
+	fields := obj.ProtoReflect().Descriptor().Fields()
+	field := fields.ByName("error_code")
+	if field != nil && field.Kind() == protoreflect.Int32Kind {
+		obj.ProtoReflect().Set(field, protoreflect.ValueOfInt32(int32(status)))
+	}
 }
